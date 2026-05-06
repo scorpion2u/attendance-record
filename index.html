@@ -305,10 +305,7 @@
     .quota-progress-fill.comp { background: #7b8b6b; }
     .quota-progress-fill.unpaid { background: #9b8958; opacity: 0.5; }
     .quota-progress-fill.other { background: #6b8b8b; opacity: 0.5; }
-
-    .quota-progress-fill.overdrawn {
-      background: #c0392b !important;
-    }
+    .quota-progress-fill.overdrawn { background: #c0392b !important; }
 
     .content-panel {
       border-radius: 28px;
@@ -789,13 +786,8 @@
       font-size: 0.85rem;
     }
 
-    .quota-overdrawn {
-      color: #c0392b !important;
-    }
-
-    .quota-safe {
-      color: #3a6b4a;
-    }
+    .quota-overdrawn { color: #c0392b !important; }
+    .quota-safe { color: #3a6b4a; }
 
     .comp-detail-list {
       max-height: 180px;
@@ -818,9 +810,7 @@
       gap: 8px;
     }
 
-    .comp-detail-item:last-child {
-      margin-bottom: 0;
-    }
+    .comp-detail-item:last-child { margin-bottom: 0; }
 
     .comp-detail-left {
       display: flex;
@@ -865,9 +855,7 @@
       flex-shrink: 0;
     }
 
-    .comp-detail-del:active {
-      background: #b0b0b0;
-    }
+    .comp-detail-del:active { background: #b0b0b0; }
 
     .comp-total-row {
       display: flex;
@@ -898,6 +886,46 @@
       color: #999;
       font-size: 0.75rem;
       padding: 12px;
+    }
+
+    .export-panel {
+      max-width: 420px !important;
+      text-align: left !important;
+    }
+
+    .export-preview {
+      background: #e8e8e8;
+      border-radius: 16px;
+      padding: 16px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 0.72rem;
+      line-height: 1.5;
+      color: #3a3a3a;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .export-account-select {
+      background: #e2e2e2;
+      border: none;
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.12), 0 0 0 1px #cccccc;
+      outline: none;
+      color: #2a2a2a;
+      font-weight: 500;
+      font-family: inherit;
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23777'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 30px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -997,7 +1025,8 @@
       <div class="menu-popup">
         <button class="btn install-menu-btn" id="installAppBtn" style="display:none;">📱 安装应用</button>
         <button class="btn" id="tutorialBtn">📖 安装教程</button>
-        <button class="btn" id="exportBtn">📤 导出数据</button>
+        <button class="btn" id="exportReportBtn">📊 导出报告</button>
+        <button class="btn" id="exportDataBtn">📤 导出数据(备份)</button>
         <button class="btn" id="importBtn">📥 导入数据</button>
         <button class="btn" id="copyNotesBtn">📋 一键复制笔记</button>
         <button class="btn confirm-danger" id="clearAllBtn">🗑️ 清空所有数据</button>
@@ -1048,6 +1077,38 @@
         <div class="form-buttons">
           <button class="btn" id="accountFormCancel">取消</button>
           <button class="btn confirm-safe" id="accountFormSave">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-overlay" id="exportReportOverlay">
+      <div class="form-panel export-panel">
+        <div class="form-title">📊 导出考勤报告</div>
+        <div class="input-group">
+          <label>👤 选择账户（留空=全部）</label>
+          <select class="export-account-select" id="exportAccountSelect">
+            <option value="">📋 所有账户</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="input-group">
+            <label>📅 开始日期（可选）</label>
+            <input type="date" id="exportDateFrom">
+          </div>
+          <div class="input-group">
+            <label>📅 结束日期（可选）</label>
+            <input type="date" id="exportDateTo">
+          </div>
+        </div>
+        <div class="form-title" style="font-size:0.8rem;text-align:left;">📄 报告预览</div>
+        <div class="export-preview" id="exportPreview">请点击"生成预览"查看报告</div>
+        <div class="form-buttons">
+          <button class="btn" id="exportPreviewBtn">👁️ 生成预览</button>
+          <button class="btn confirm-safe" id="exportCopyBtn">📋 复制报告</button>
+        </div>
+        <div class="form-buttons">
+          <button class="btn" id="exportDownloadBtn">💾 下载报告</button>
+          <button class="btn" id="exportCloseBtn">关闭</button>
         </div>
       </div>
     </div>
@@ -1125,6 +1186,7 @@
       let editingAccountName = null;
       let editingRecordIndex = null;
       let isExpanded = false;
+      let currentReportText = '';
       
       let appData = {
         accounts: [],
@@ -1135,11 +1197,11 @@
 
       const QUOTA_TYPES = ['病假', '年假', '补给假'];
 
+      // DOM引用
       const accountSelectorArea = document.getElementById('accountSelectorArea');
       const noAccountHint = document.getElementById('noAccountHint');
       const recordFormArea = document.getElementById('recordFormArea');
       const quotaSection = document.getElementById('quotaSection');
-      
       const sickValue = document.getElementById('sickValue');
       const sickDetail = document.getElementById('sickDetail');
       const sickBar = document.getElementById('sickBar');
@@ -1153,7 +1215,6 @@
       const unpaidBar = document.getElementById('unpaidBar');
       const otherValue = document.getElementById('otherValue');
       const otherBar = document.getElementById('otherBar');
-      
       const dateInput = document.getElementById('dateInput');
       const typeSelect = document.getElementById('typeSelect');
       const costInput = document.getElementById('costInput');
@@ -1169,7 +1230,8 @@
       const tutorialBtn = document.getElementById('tutorialBtn');
       const tutorialOverlay = document.getElementById('tutorialOverlay');
       const tutorialCloseBtn = document.getElementById('tutorialCloseBtn');
-      const exportBtn = document.getElementById('exportBtn');
+      const exportReportBtn = document.getElementById('exportReportBtn');
+      const exportDataBtn = document.getElementById('exportDataBtn');
       const importBtn = document.getElementById('importBtn');
       const importFile = document.getElementById('importFile');
       const copyNotesBtn = document.getElementById('copyNotesBtn');
@@ -1188,7 +1250,15 @@
       const annualQuotaInput = document.getElementById('annualQuotaInput');
       const accountFormCancel = document.getElementById('accountFormCancel');
       const accountFormSave = document.getElementById('accountFormSave');
-
+      const exportReportOverlay = document.getElementById('exportReportOverlay');
+      const exportAccountSelect = document.getElementById('exportAccountSelect');
+      const exportDateFrom = document.getElementById('exportDateFrom');
+      const exportDateTo = document.getElementById('exportDateTo');
+      const exportPreview = document.getElementById('exportPreview');
+      const exportPreviewBtn = document.getElementById('exportPreviewBtn');
+      const exportCopyBtn = document.getElementById('exportCopyBtn');
+      const exportDownloadBtn = document.getElementById('exportDownloadBtn');
+      const exportCloseBtn = document.getElementById('exportCloseBtn');
       const compManageOverlay = document.getElementById('compManageOverlay');
       const compDetailList = document.getElementById('compDetailList');
       const compTotalDays = document.getElementById('compTotalDays');
@@ -1197,7 +1267,6 @@
       const compNoteInput = document.getElementById('compNoteInput');
       const compAddBtn = document.getElementById('compAddBtn');
       const compManageClose = document.getElementById('compManageClose');
-
       const editRecordOverlay = document.getElementById('editRecordOverlay');
       const editDateInput = document.getElementById('editDateInput');
       const editTypeSelect = document.getElementById('editTypeSelect');
@@ -1210,10 +1279,9 @@
       let toastTimer;
       let modalResolve = null;
 
-      if (dateInput) {
-        dateInput.value = new Date().toISOString().slice(0, 10);
-      }
+      if (dateInput) { dateInput.value = new Date().toISOString().slice(0, 10); }
 
+      // ========== 工具函数 ==========
       function showToast(msg) {
         toast.textContent = msg;
         toast.classList.add('show');
@@ -1242,6 +1310,47 @@
       modalCancel.onclick = () => hideModal(false);
       modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) hideModal(false); });
 
+      function escapeHtml(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+      }
+
+      function fallbackCopy(text) {
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.left = '-9999px';
+          textarea.style.top = '-9999px';
+          textarea.style.opacity = '0';
+          textarea.setAttribute('readonly', '');
+          document.body.appendChild(textarea);
+          if (navigator.userAgent.match(/ipad|iphone/i)) {
+            const range = document.createRange();
+            range.selectNodeContents(textarea);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            textarea.setSelectionRange(0, 999999);
+          } else {
+            textarea.select();
+            textarea.setSelectionRange(0, 999999);
+          }
+          const success = document.execCommand('copy');
+          document.body.removeChild(textarea);
+          if (success) {
+            showToast('已复制到剪贴板');
+          } else {
+            showToast('复制失败，请尝试下载');
+          }
+        } catch (err) {
+          showToast('复制失败，请尝试下载');
+        }
+      }
+
+      // ========== 数据管理 ==========
       function loadData() {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -1281,6 +1390,7 @@
         renderAccountSelector();
         updateUIVisibility();
         updateQuotaDisplay();
+        updateExportAccountSelect();
         renderRecords();
       }
 
@@ -1312,44 +1422,54 @@
         return appData.quotas[accountName];
       }
 
-      function updateQuotaDisplay() {
-        if (!currentAccount) {
-          quotaSection.style.display = 'none';
-          return;
+      function getCurrentRecords() {
+        if (!currentAccount || !appData.records[currentAccount]) return [];
+        return [...appData.records[currentAccount]].sort((a, b) => {
+          return (b.date || '').localeCompare(a.date || '');
+        });
+      }
+
+      function getBadgeClass(type) {
+        switch(type) {
+          case '病假': return 'sick';
+          case '年假': return 'annual';
+          case '补给假': return 'comp';
+          case '无薪假': return 'unpaid';
+          case '其他': return 'other';
+          default: return 'other';
         }
+      }
+
+      // ========== UI更新 ==========
+      function updateQuotaDisplay() {
+        if (!currentAccount) { quotaSection.style.display = 'none'; return; }
         quotaSection.style.display = '';
-        
         const quota = getQuota(currentAccount);
         const sickUsed = getUsedDays(currentAccount, '病假');
         const annualUsed = getUsedDays(currentAccount, '年假');
         const compUsed = getUsedDays(currentAccount, '补给假');
         const unpaidUsed = getUsedDays(currentAccount, '无薪假');
         const otherUsed = getUsedDays(currentAccount, '其他');
-        
         const compTotal = getCompTotal(currentAccount);
         const sickRemaining = (quota.sick || 0) - sickUsed;
         const annualRemaining = (quota.annual || 0) - annualUsed;
         const compRemaining = compTotal - compUsed;
-        
         const sickPercent = (quota.sick || 0) > 0 ? Math.min(100, Math.round((sickUsed / Math.max(quota.sick, sickUsed, 1)) * 100)) : (sickUsed > 0 ? 100 : 0);
         const annualPercent = (quota.annual || 0) > 0 ? Math.min(100, Math.round((annualUsed / Math.max(quota.annual, annualUsed, 1)) * 100)) : (annualUsed > 0 ? 100 : 0);
         const compPercent = compTotal > 0 ? Math.min(100, Math.round((compUsed / Math.max(compTotal, compUsed, 1)) * 100)) : (compUsed > 0 ? 100 : 0);
 
-        // 病假
         sickValue.textContent = sickRemaining;
         sickValue.className = 'quota-card-value ' + (sickRemaining < 0 ? 'quota-overdrawn' : '');
         sickDetail.textContent = '已用' + sickUsed + '天 / ' + (quota.sick || 0) + '天';
         sickBar.style.width = sickPercent + '%';
         sickBar.className = 'quota-progress-fill sick' + (sickRemaining < 0 ? ' overdrawn' : '');
 
-        // 年假
         annualValue.textContent = annualRemaining;
         annualValue.className = 'quota-card-value ' + (annualRemaining < 0 ? 'quota-overdrawn' : '');
         annualDetail.textContent = '已用' + annualUsed + '天 / ' + (quota.annual || 0) + '天';
         annualBar.style.width = annualPercent + '%';
         annualBar.className = 'quota-progress-fill annual' + (annualRemaining < 0 ? ' overdrawn' : '');
 
-        // 补给假
         compValue.textContent = compRemaining;
         compValue.className = 'quota-card-value ' + (compRemaining < 0 ? 'quota-overdrawn' : '');
         compDetail.textContent = '已用' + compUsed + '天 / ' + compTotal + '天';
@@ -1358,9 +1478,16 @@
 
         unpaidValue.textContent = unpaidUsed;
         unpaidBar.style.width = Math.min(unpaidUsed * 5, 100) + '%';
-
         otherValue.textContent = otherUsed;
         otherBar.style.width = Math.min(otherUsed * 5, 100) + '%';
+      }
+
+      function updateExportAccountSelect() {
+        let optionsHtml = '<option value="">📋 所有账户</option>';
+        accounts.forEach(acc => {
+          optionsHtml += `<option value="${escapeHtml(acc)}">${escapeHtml(acc)}</option>`;
+        });
+        exportAccountSelect.innerHTML = optionsHtml;
       }
 
       function renderAccountSelector() {
@@ -1370,9 +1497,7 @@
             <button class="btn primary btn-sm" id="addFirstAccountBtn" title="添加账户" style="font-size:1rem;">➕</button>
           `;
           const addFirstBtn = document.getElementById('addFirstAccountBtn');
-          if (addFirstBtn) {
-            addFirstBtn.addEventListener('click', () => openAccountForm());
-          }
+          if (addFirstBtn) addFirstBtn.addEventListener('click', () => openAccountForm());
         } else {
           let optionsHtml = accounts.map(acc => 
             `<option value="${escapeHtml(acc)}" ${acc === currentAccount ? 'selected' : ''}>${escapeHtml(acc)}</option>`
@@ -1385,10 +1510,9 @@
             <button class="btn primary btn-sm" id="deleteAccountBtn" title="删除账户" style="font-size:0.8rem;">🗑</button>
           `;
           const accountSelect = document.getElementById('accountSelect');
-          const addBtn = document.getElementById('addAccountBtn');
-          const editBtn = document.getElementById('editAccountBtn');
-          const deleteBtn = document.getElementById('deleteAccountBtn');
-          
+          document.getElementById('addAccountBtn').addEventListener('click', () => openAccountForm());
+          document.getElementById('editAccountBtn').addEventListener('click', () => { if (currentAccount) openAccountForm(currentAccount); });
+          document.getElementById('deleteAccountBtn').addEventListener('click', () => deleteCurrentAccount());
           if (accountSelect) {
             accountSelect.addEventListener('change', (e) => {
               currentAccount = e.target.value;
@@ -1397,11 +1521,6 @@
               renderRecords();
             });
           }
-          if (addBtn) addBtn.addEventListener('click', () => openAccountForm());
-          if (editBtn) editBtn.addEventListener('click', () => {
-            if (currentAccount) openAccountForm(currentAccount);
-          });
-          if (deleteBtn) deleteBtn.addEventListener('click', () => deleteCurrentAccount());
         }
       }
 
@@ -1417,6 +1536,7 @@
         }
       }
 
+      // ========== 账户管理 ==========
       function openAccountForm(editName = null) {
         editingAccountName = editName;
         if (editName) {
@@ -1448,49 +1568,29 @@
         const name = accountNameInput.value.trim();
         const sickQuota = parseInt(sickQuotaInput.value) || 0;
         const annualQuota = parseInt(annualQuotaInput.value) || 0;
-        
         if (!name) { showToast('请输入账户名称'); return; }
-        
         if (editingAccountName) {
-          if (name !== editingAccountName && accounts.includes(name)) {
-            showToast('账户名称已存在');
-            return;
-          }
+          if (name !== editingAccountName && accounts.includes(name)) { showToast('账户名称已存在'); return; }
           const idx = accounts.indexOf(editingAccountName);
           if (idx >= 0) {
             accounts[idx] = name;
-            if (appData.records[editingAccountName]) {
-              appData.records[name] = appData.records[editingAccountName];
-              delete appData.records[editingAccountName];
-            }
-            if (appData.compDetails[editingAccountName]) {
-              appData.compDetails[name] = appData.compDetails[editingAccountName];
-              delete appData.compDetails[editingAccountName];
-            }
-            if (appData.quotas[editingAccountName]) {
-              delete appData.quotas[editingAccountName];
-            }
+            if (appData.records[editingAccountName]) { appData.records[name] = appData.records[editingAccountName]; delete appData.records[editingAccountName]; }
+            if (appData.compDetails[editingAccountName]) { appData.compDetails[name] = appData.compDetails[editingAccountName]; delete appData.compDetails[editingAccountName]; }
+            if (appData.quotas[editingAccountName]) delete appData.quotas[editingAccountName];
             appData.quotas[name] = { sick: sickQuota, annual: annualQuota };
-            if (currentAccount === editingAccountName) {
-              currentAccount = name;
-            }
+            if (currentAccount === editingAccountName) currentAccount = name;
           }
         } else {
-          if (accounts.includes(name)) {
-            showToast('账户名称已存在');
-            return;
-          }
+          if (accounts.includes(name)) { showToast('账户名称已存在'); return; }
           accounts.push(name);
           appData.records[name] = [];
           appData.compDetails[name] = [];
           appData.quotas[name] = { sick: sickQuota, annual: annualQuota };
-          if (!currentAccount) {
-            currentAccount = name;
-          }
+          if (!currentAccount) currentAccount = name;
         }
-        
         saveData();
         closeAccountForm();
+        updateExportAccountSelect();
         renderAccountSelector();
         updateUIVisibility();
         updateQuotaDisplay();
@@ -1507,11 +1607,9 @@
           delete appData.records[name];
           delete appData.quotas[name];
           delete appData.compDetails[name];
-          if (currentAccount === name) {
-            currentAccount = accounts.length > 0 ? accounts[0] : null;
-            isExpanded = false;
-          }
+          if (currentAccount === name) { currentAccount = accounts.length > 0 ? accounts[0] : null; isExpanded = false; }
           saveData();
+          updateExportAccountSelect();
           renderAccountSelector();
           updateUIVisibility();
           updateQuotaDisplay();
@@ -1520,222 +1618,58 @@
         });
       }
 
-      function getCurrentRecords() {
-        if (!currentAccount || !appData.records[currentAccount]) return [];
-        return [...appData.records[currentAccount]].sort((a, b) => {
-          return (b.date || '').localeCompare(a.date || '');
-        });
-      }
-
-      function getBadgeClass(type) {
-        switch(type) {
-          case '病假': return 'sick';
-          case '年假': return 'annual';
-          case '补给假': return 'comp';
-          case '无薪假': return 'unpaid';
-          case '其他': return 'other';
-          default: return 'other';
-        }
-      }
-
-      function openCompManage() {
-        if (!currentAccount) return;
-        if (compDateInput) {
-          compDateInput.value = new Date().toISOString().slice(0, 10);
-        }
-        compDaysInput.value = 1;
-        compNoteInput.value = '';
-        renderCompDetails();
-        compManageOverlay.classList.add('show');
-        setTimeout(() => compDateInput.focus(), 150);
-      }
-
-      function closeCompManage() {
-        compManageOverlay.classList.remove('show');
-      }
-
-      function renderCompDetails() {
-        const details = appData.compDetails[currentAccount] || [];
-        if (details.length === 0) {
-          compDetailList.innerHTML = '<div class="comp-empty-hint">暂无补给记录，请在下方添加</div>';
-        } else {
-          compDetailList.innerHTML = details.map((d, i) => `
-            <div class="comp-detail-item">
-              <div class="comp-detail-left">
-                <span class="comp-detail-date">📅 ${d.date}</span>
-                <span class="comp-detail-days">+${d.days}天</span>
-                ${d.note ? `<span class="comp-detail-note">📝 ${escapeHtml(d.note)}</span>` : ''}
-              </div>
-              <button class="comp-detail-del" data-index="${i}" title="删除">✕</button>
-            </div>
-          `).join('');
-
-          compDetailList.querySelectorAll('.comp-detail-del').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const index = parseInt(btn.dataset.index);
-              if (!isNaN(index)) {
-                const details = appData.compDetails[currentAccount] || [];
-                details.splice(index, 1);
-                appData.compDetails[currentAccount] = details;
-                saveData();
-                updateQuotaDisplay();
-                renderCompDetails();
-                renderRecords();
-              }
-            });
-          });
-        }
-
-        const total = getCompTotal(currentAccount);
-        compTotalDays.textContent = total + ' 天';
-      }
-
-      compAddBtn.addEventListener('click', () => {
-        if (!currentAccount) return;
-        const date = compDateInput.value;
-        const days = parseInt(compDaysInput.value) || 1;
-        const note = compNoteInput.value.trim();
-        
-        if (!date) { showToast('请选择补给日期'); return; }
-        if (days < 1) { showToast('天数至少为1'); return; }
-        
-        if (!appData.compDetails[currentAccount]) {
-          appData.compDetails[currentAccount] = [];
-        }
-        
-        appData.compDetails[currentAccount].push({
-          date,
-          days,
-          note,
-          timestamp: Date.now()
-        });
-        
-        saveData();
-        updateQuotaDisplay();
-        renderCompDetails();
-        compDaysInput.value = 1;
-        compNoteInput.value = '';
-        showToast(`已添加 +${days}天 补给假`);
-      });
-
-      compManageClose.addEventListener('click', closeCompManage);
-      compManageOverlay.addEventListener('click', e => { if (e.target === compManageOverlay) closeCompManage(); });
-
-      document.getElementById('compCard').addEventListener('click', openCompManage);
-
+      // ========== 记录管理 ==========
       function renderSummaryBar() {
         const records = getCurrentRecords();
-        
         if (records.length === 0) {
           recordSummaryArea.innerHTML = '';
           recordContainer.classList.add('collapsed-empty');
           recordContainer.classList.remove('expanded');
           return;
         }
-        
         recordContainer.classList.remove('collapsed-empty');
-        
-        const summaryText = isExpanded 
-          ? `📋 全部记录 (${records.length}条)` 
-          : `📋 记录已折叠 (${records.length}条)`;
-        
+        const summaryText = isExpanded ? `📋 全部记录 (${records.length}条)` : `📋 记录已折叠 (${records.length}条)`;
         const toggleText = isExpanded ? '🔼 收起全部' : '🔽 展开全部';
-        
-        recordSummaryArea.innerHTML = `
-          <div class="record-summary">
-            <span class="record-summary-text">${summaryText}</span>
-            <button class="toggle-btn" id="toggleRecordsBtn">${toggleText}</button>
-          </div>
-        `;
-        
+        recordSummaryArea.innerHTML = `<div class="record-summary"><span class="record-summary-text">${summaryText}</span><button class="toggle-btn" id="toggleRecordsBtn">${toggleText}</button></div>`;
         const toggleBtn = document.getElementById('toggleRecordsBtn');
         if (toggleBtn) {
-          toggleBtn.addEventListener('click', () => {
-            isExpanded = !isExpanded;
-            renderRecords();
-          });
+          toggleBtn.addEventListener('click', () => { isExpanded = !isExpanded; renderRecords(); });
         }
-        
-        if (isExpanded) {
-          recordContainer.classList.add('expanded');
-        } else {
-          recordContainer.classList.remove('expanded');
-        }
+        recordContainer.classList.toggle('expanded', isExpanded);
       }
 
       function renderRecords() {
         if (!recordContainer) return;
-        if (!currentAccount) {
-          recordContainer.innerHTML = '<div class="empty-hint">📭 请先添加账户</div>';
-          recordSummaryArea.innerHTML = '';
-          return;
-        }
-        
+        if (!currentAccount) { recordContainer.innerHTML = '<div class="empty-hint">📭 请先添加账户</div>'; recordSummaryArea.innerHTML = ''; return; }
         const records = getCurrentRecords();
-        if (records.length === 0) {
-          recordContainer.innerHTML = '<div class="empty-hint">📭 暂无考勤记录</div>';
-          recordSummaryArea.innerHTML = '';
-          return;
-        }
-        
+        if (records.length === 0) { recordContainer.innerHTML = '<div class="empty-hint">📭 暂无考勤记录</div>'; recordSummaryArea.innerHTML = ''; return; }
         renderSummaryBar();
-        
-        if (!isExpanded) {
-          recordContainer.innerHTML = '';
-          return;
-        }
-        
+        if (!isExpanded) { recordContainer.innerHTML = ''; return; }
         recordContainer.innerHTML = records.map((rec, idx) => {
           const costDisplay = rec.type === '病假' && rec.cost > 0 ? `💊 RM ${parseFloat(rec.cost).toFixed(2)}` : '';
-          return `
-            <div class="record-item">
-              <div class="record-left">
-                <div class="record-top-row">
-                  <span class="badge ${getBadgeClass(rec.type)}">${rec.type}</span>
-                  <span class="record-date">${rec.date}</span>
-                </div>
-                ${rec.note ? `<div class="record-note">📝 ${escapeHtml(rec.note)}</div>` : ''}
-                ${costDisplay ? `<div class="record-cost">${costDisplay}</div>` : ''}
-              </div>
-              <div class="record-actions">
-                <button class="icon-btn edit-record" data-index="${idx}" title="编辑">✏️</button>
-                <button class="icon-btn del-record" data-index="${idx}" title="删除">🗑️</button>
-              </div>
-            </div>
-          `;
+          return `<div class="record-item"><div class="record-left"><div class="record-top-row"><span class="badge ${getBadgeClass(rec.type)}">${rec.type}</span><span class="record-date">${rec.date}</span></div>${rec.note ? `<div class="record-note">📝 ${escapeHtml(rec.note)}</div>` : ''}${costDisplay ? `<div class="record-cost">${costDisplay}</div>` : ''}</div><div class="record-actions"><button class="icon-btn edit-record" data-index="${idx}" title="编辑">✏️</button><button class="icon-btn del-record" data-index="${idx}" title="删除">🗑️</button></div></div>`;
         }).join('');
 
         recordContainer.querySelectorAll('.edit-record').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const index = parseInt(btn.dataset.index);
-            if (!isNaN(index)) {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.index);
+            if (!isNaN(idx)) {
               const records = getCurrentRecords();
-              const rec = records[index];
-              const originalIndex = appData.records[currentAccount].indexOf(rec);
+              const originalIndex = appData.records[currentAccount].indexOf(records[idx]);
               openEditRecord(originalIndex);
             }
           });
         });
-
         recordContainer.querySelectorAll('.del-record').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const index = parseInt(btn.dataset.index);
-            if (!isNaN(index)) {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.index);
+            if (!isNaN(idx)) {
               const records = getCurrentRecords();
-              const rec = records[index];
-              const originalIndex = appData.records[currentAccount].indexOf(rec);
+              const originalIndex = appData.records[currentAccount].indexOf(records[idx]);
               deleteRecord(originalIndex);
             }
           });
         });
-      }
-
-      function escapeHtml(str) {
-        if (!str) return '';
-        const d = document.createElement('div');
-        d.textContent = str;
-        return d.innerHTML;
       }
 
       function openEditRecord(index) {
@@ -1744,32 +1678,21 @@
         if (index < 0 || index >= records.length) return;
         const rec = records[index];
         editingRecordIndex = index;
-        
         editDateInput.value = rec.date;
         editTypeSelect.value = rec.type;
         editCostInput.value = rec.cost || 0;
         editNoteInput.value = rec.note || '';
-        
         updateEditCostVisibility();
-        
         editRecordOverlay.classList.add('show');
         setTimeout(() => editDateInput.focus(), 150);
       }
 
       function updateEditCostVisibility() {
-        if (editTypeSelect.value === '病假') {
-          editCostGroup.style.display = '';
-        } else {
-          editCostGroup.style.display = 'none';
-          editCostInput.value = '0';
-        }
+        editCostGroup.style.display = editTypeSelect.value === '病假' ? '' : 'none';
+        if (editTypeSelect.value !== '病假') editCostInput.value = '0';
       }
 
-      function closeEditRecord() {
-        editRecordOverlay.classList.remove('show');
-        editingRecordIndex = null;
-      }
-
+      function closeEditRecord() { editRecordOverlay.classList.remove('show'); editingRecordIndex = null; }
       editTypeSelect.addEventListener('change', updateEditCostVisibility);
       editRecordCancel.addEventListener('click', closeEditRecord);
       editRecordOverlay.addEventListener('click', e => { if (e.target === editRecordOverlay) closeEditRecord(); });
@@ -1778,23 +1701,12 @@
         if (editingRecordIndex === null || !currentAccount) return;
         const records = appData.records[currentAccount];
         if (editingRecordIndex < 0 || editingRecordIndex >= records.length) return;
-        
         const date = editDateInput.value;
         const type = editTypeSelect.value;
         const cost = type === '病假' ? (parseFloat(editCostInput.value) || 0) : 0;
         const note = editNoteInput.value.trim();
-        
         if (!date) { showToast('请选择日期'); return; }
-        
-        records[editingRecordIndex] = {
-          ...records[editingRecordIndex],
-          date,
-          type,
-          cost,
-          note,
-          timestamp: Date.now()
-        };
-        
+        records[editingRecordIndex] = { ...records[editingRecordIndex], date, type, cost, note, timestamp: Date.now() };
         saveData();
         updateQuotaDisplay();
         renderRecords();
@@ -1819,14 +1731,9 @@
       }
 
       function updateCostVisibility() {
-        if (typeSelect.value === '病假') {
-          costGroup.style.display = '';
-        } else {
-          costGroup.style.display = 'none';
-          costInput.value = '0';
-        }
+        costGroup.style.display = typeSelect.value === '病假' ? '' : 'none';
+        if (typeSelect.value !== '病假') costInput.value = '0';
       }
-
       typeSelect.addEventListener('change', updateCostVisibility);
 
       addRecordBtn.addEventListener('click', () => {
@@ -1836,25 +1743,17 @@
         const cost = type === '病假' ? (parseFloat(costInput.value) || 0) : 0;
         const note = noteInput.value.trim();
         if (!date) { showToast('请选择日期'); return; }
-        
-        appData.records[currentAccount].push({
-          date, type, cost, note,
-          account: currentAccount,
-          timestamp: Date.now()
-        });
+        appData.records[currentAccount].push({ date, type, cost, note, account: currentAccount, timestamp: Date.now() });
         saveData();
         updateQuotaDisplay();
         noteInput.value = '';
         costInput.value = '0';
         isExpanded = true;
         renderRecords();
-        
-        // 如果配额已用完，给出提醒但依然允许记录
         let totalQuota = 0;
         if (type === '病假') totalQuota = getQuota(currentAccount).sick || 0;
         else if (type === '年假') totalQuota = getQuota(currentAccount).annual || 0;
         else if (type === '补给假') totalQuota = getCompTotal(currentAccount);
-        
         const usedDays = getUsedDays(currentAccount, type);
         if (QUOTA_TYPES.includes(type) && usedDays > totalQuota) {
           showToast(`⚠️ ${type}已超额 ${usedDays - totalQuota} 天`);
@@ -1863,6 +1762,196 @@
         }
       });
 
+      // ========== 补给假管理 ==========
+      function openCompManage() {
+        if (!currentAccount) return;
+        if (compDateInput) compDateInput.value = new Date().toISOString().slice(0, 10);
+        compDaysInput.value = 1;
+        compNoteInput.value = '';
+        renderCompDetails();
+        compManageOverlay.classList.add('show');
+        setTimeout(() => compDateInput.focus(), 150);
+      }
+
+      function closeCompManage() { compManageOverlay.classList.remove('show'); }
+
+      function renderCompDetails() {
+        const details = appData.compDetails[currentAccount] || [];
+        if (details.length === 0) {
+          compDetailList.innerHTML = '<div class="comp-empty-hint">暂无补给记录，请在下方添加</div>';
+        } else {
+          compDetailList.innerHTML = details.map((d, i) => `
+            <div class="comp-detail-item">
+              <div class="comp-detail-left">
+                <span class="comp-detail-date">📅 ${d.date}</span>
+                <span class="comp-detail-days">+${d.days}天</span>
+                ${d.note ? `<span class="comp-detail-note">📝 ${escapeHtml(d.note)}</span>` : ''}
+              </div>
+              <button class="comp-detail-del" data-index="${i}" title="删除">✕</button>
+            </div>
+          `).join('');
+          compDetailList.querySelectorAll('.comp-detail-del').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const index = parseInt(btn.dataset.index);
+              if (!isNaN(index)) {
+                const details = appData.compDetails[currentAccount] || [];
+                details.splice(index, 1);
+                appData.compDetails[currentAccount] = details;
+                saveData();
+                updateQuotaDisplay();
+                renderCompDetails();
+                renderRecords();
+              }
+            });
+          });
+        }
+        compTotalDays.textContent = getCompTotal(currentAccount) + ' 天';
+      }
+
+      compAddBtn.addEventListener('click', () => {
+        if (!currentAccount) return;
+        const date = compDateInput.value;
+        const days = parseInt(compDaysInput.value) || 1;
+        const note = compNoteInput.value.trim();
+        if (!date) { showToast('请选择补给日期'); return; }
+        if (days < 1) { showToast('天数至少为1'); return; }
+        if (!appData.compDetails[currentAccount]) appData.compDetails[currentAccount] = [];
+        appData.compDetails[currentAccount].push({ date, days, note, timestamp: Date.now() });
+        saveData();
+        updateQuotaDisplay();
+        renderCompDetails();
+        compDaysInput.value = 1;
+        compNoteInput.value = '';
+        showToast(`已添加 +${days}天 补给假`);
+      });
+
+      compManageClose.addEventListener('click', closeCompManage);
+      compManageOverlay.addEventListener('click', e => { if (e.target === compManageOverlay) closeCompManage(); });
+      document.getElementById('compCard').addEventListener('click', openCompManage);
+
+      // ========== 导出报告 ==========
+      function generateReport(accountFilter, dateFrom, dateTo) {
+        const targetAccounts = accountFilter ? [accountFilter] : accounts;
+        let report = '';
+        const now = new Date().toLocaleDateString('zh-CN');
+        report += '══════\n';
+        report += '考 勤 报 告\n';
+        report += '══════\n';
+        report += `生成日期：\n${now}\n`;
+        if (dateFrom || dateTo) report += `筛选日期：${dateFrom || '不限'} ~ ${dateTo || '不限'}\n`;
+        
+        let gtSick = 0, gtAnnual = 0, gtComp = 0, gtUnpaid = 0, gtOther = 0, gtCost = 0;
+        targetAccounts.forEach(acc => {
+          const records = (appData.records[acc] || []).filter(r => {
+            if (dateFrom && r.date < dateFrom) return false;
+            if (dateTo && r.date > dateTo) return false;
+            return true;
+          }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+          const quota = getQuota(acc);
+          const compTotal = getCompTotal(acc);
+          const compDetails = appData.compDetails[acc] || [];
+          report += '─────────\n';
+          report += `👤 账户：${acc}\n`;
+          report += '─────────\n\n【配额概览】\n';
+          const sickUsed = records.filter(r => r.type === '病假').length;
+          const annualUsed = records.filter(r => r.type === '年假').length;
+          const compUsed = records.filter(r => r.type === '补给假').length;
+          const unpaidUsed = records.filter(r => r.type === '无薪假').length;
+          const otherUsed = records.filter(r => r.type === '其他').length;
+          const totalCost = records.reduce((sum, r) => sum + (r.cost || 0), 0);
+          const sickRem = (quota.sick || 0) - sickUsed;
+          const annualRem = (quota.annual || 0) - annualUsed;
+          const compRem = compTotal - compUsed;
+          report += `  🤒 病假：  ${sickUsed}天 / ${quota.sick || 0}天 (剩余${sickRem}天)${sickRem < 0 ? ' ⚠超额' : ''}\n`;
+          report += `  🏖️ 年假：  ${annualUsed}天 / ${quota.annual || 0}天 (剩余${annualRem}天)${annualRem < 0 ? ' ⚠超额' : ''}\n`;
+          report += `  🔄 补给假：${compUsed}天 / ${compTotal}天 (剩余${compRem}天)${compRem < 0 ? ' ⚠超额' : ''}\n`;
+          report += `  💸 无薪假：${unpaidUsed}天\n`;
+          report += `  📌 其他：  ${otherUsed}天\n`;
+          report += `  💰 总医药费：RM ${totalCost.toFixed(2)}\n`;
+          if (compDetails.length > 0) {
+            report += '\n【补给假明细】\n';
+            compDetails.forEach(d => {
+              report += `  📅 ${d.date} +${d.days}天`;
+              if (d.note) report += ` | ${d.note}`;
+              report += '\n';
+            });
+          }
+          report += '\n【请假记录】\n';
+          if (records.length > 0) {
+            records.forEach(r => {
+              report += `  ${r.date} | ${r.type}`;
+              if (r.type === '病假' && r.cost > 0) report += ` | 医药费: RM ${parseFloat(r.cost).toFixed(2)}`;
+              if (r.note) report += ` | ${r.note}`;
+              report += '\n';
+            });
+          } else {
+            report += '  暂无记录\n';
+          }
+          report += '\n';
+          gtSick += sickUsed; gtAnnual += annualUsed; gtComp += compUsed;
+          gtUnpaid += unpaidUsed; gtOther += otherUsed; gtCost += totalCost;
+        });
+        if (targetAccounts.length > 1) {
+          report += '══════════════════════════\n';
+          report += '    总 计\n';
+          report += '══════════════════════════\n';
+          report += `  🤒 病假：  ${gtSick}天\n`;
+          report += `  🏖️ 年假：  ${gtAnnual}天\n`;
+          report += `  🔄 补给假：${gtComp}天\n`;
+          report += `  💸 无薪假：${gtUnpaid}天\n`;
+          report += `  📌 其他：  ${gtOther}天\n`;
+          report += `  💰 总医药费：RM ${gtCost.toFixed(2)}\n`;
+          report += '══════════════════════════\n';
+        }
+        return report;
+      }
+
+      function updateExportPreview() {
+        currentReportText = generateReport(exportAccountSelect.value, exportDateFrom.value, exportDateTo.value);
+        exportPreview.textContent = currentReportText;
+      }
+
+      function openExportReport() {
+        menuOverlay.classList.remove('show');
+        updateExportAccountSelect();
+        exportAccountSelect.value = currentAccount || '';
+        exportDateFrom.value = '';
+        exportDateTo.value = '';
+        updateExportPreview();
+        exportReportOverlay.classList.add('show');
+      }
+
+      function closeExportReport() { exportReportOverlay.classList.remove('show'); }
+
+      exportPreviewBtn.addEventListener('click', updateExportPreview);
+      exportAccountSelect.addEventListener('change', updateExportPreview);
+      exportDateFrom.addEventListener('change', updateExportPreview);
+      exportDateTo.addEventListener('change', updateExportPreview);
+      exportCloseBtn.addEventListener('click', closeExportReport);
+      exportReportOverlay.addEventListener('click', e => { if (e.target === exportReportOverlay) closeExportReport(); });
+
+      exportCopyBtn.addEventListener('click', () => {
+        if (!currentReportText) { showToast('请先生成预览'); return; }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(currentReportText).then(() => showToast('报告已复制到剪贴板')).catch(() => fallbackCopy(currentReportText));
+        } else {
+          fallbackCopy(currentReportText);
+        }
+      });
+
+      exportDownloadBtn.addEventListener('click', () => {
+        if (!currentReportText) { showToast('请先生成预览'); return; }
+        const blob = new Blob([currentReportText], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const accStr = exportAccountSelect.value || '全部账户';
+        a.download = `考勤报告_${accStr}_${new Date().toISOString().slice(0, 10)}.txt`;
+        a.click();
+        showToast('报告已下载');
+      });
+
+      // ========== 菜单功能 ==========
       menuBtn.onclick = () => menuOverlay.classList.add('show');
       menuCloseBtn.onclick = () => menuOverlay.classList.remove('show');
       menuOverlay.addEventListener('click', e => { if (e.target === menuOverlay) menuOverlay.classList.remove('show'); });
@@ -1871,18 +1960,22 @@
       tutorialCloseBtn.onclick = () => tutorialOverlay.classList.remove('show');
       tutorialOverlay.addEventListener('click', e => { if (e.target === tutorialOverlay) tutorialOverlay.classList.remove('show'); });
 
-      exportBtn.onclick = () => {
+      exportReportBtn.addEventListener('click', openExportReport);
+
+      // 导出数据(JSON备份)
+      exportDataBtn.addEventListener('click', () => {
         menuOverlay.classList.remove('show');
         const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = '考勤备份_' + new Date().toISOString().slice(0, 10) + '.json';
         a.click();
-        showToast('导出成功');
-      };
+        showToast('备份数据已导出');
+      });
 
-      importBtn.onclick = () => { menuOverlay.classList.remove('show'); importFile.click(); };
-      importFile.onchange = function(e) {
+      // 导入数据
+      importBtn.addEventListener('click', () => { menuOverlay.classList.remove('show'); importFile.click(); });
+      importFile.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -1913,6 +2006,7 @@
                 }
                 isExpanded = false;
                 saveData();
+                updateExportAccountSelect();
                 renderAccountSelector();
                 updateUIVisibility();
                 updateQuotaDisplay();
@@ -1930,69 +2024,29 @@
           }
         };
         reader.readAsText(file);
-      };
+      });
 
-      copyNotesBtn.onclick = function() {
+      // 一键复制笔记
+      copyNotesBtn.addEventListener('click', function() {
         menuOverlay.classList.remove('show');
         if (!currentAccount) { showToast('请先添加账户'); return; }
         const records = getCurrentRecords();
         if (records.length === 0) { showToast('当前账户无记录'); return; }
-        
         const text = records.map(r => {
           let line = `[${r.date}] ${r.type}`;
           if (r.type === '病假' && r.cost > 0) line += ` | 医药费: RM ${parseFloat(r.cost).toFixed(2)}`;
           if (r.note) line += ` | 备注: ${r.note}`;
           return line;
         }).join('\n');
-        
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(() => {
-            showToast('笔记已复制到剪贴板');
-          }).catch(() => {
-            fallbackCopy(text);
-          });
+          navigator.clipboard.writeText(text).then(() => showToast('笔记已复制到剪贴板')).catch(() => fallbackCopy(text));
         } else {
           fallbackCopy(text);
         }
-      };
+      });
 
-      function fallbackCopy(text) {
-        try {
-          const textarea = document.createElement('textarea');
-          textarea.value = text;
-          textarea.style.position = 'fixed';
-          textarea.style.left = '-9999px';
-          textarea.style.top = '-9999px';
-          textarea.style.opacity = '0';
-          textarea.setAttribute('readonly', '');
-          document.body.appendChild(textarea);
-          
-          if (navigator.userAgent.match(/ipad|iphone/i)) {
-            const range = document.createRange();
-            range.selectNodeContents(textarea);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-            textarea.setSelectionRange(0, 999999);
-          } else {
-            textarea.select();
-            textarea.setSelectionRange(0, 999999);
-          }
-          
-          const success = document.execCommand('copy');
-          document.body.removeChild(textarea);
-          
-          if (success) {
-            showToast('笔记已复制到剪贴板');
-          } else {
-            showToast('复制失败，请尝试导出数据');
-          }
-        } catch (err) {
-          showToast('复制失败，请尝试导出数据');
-        }
-      }
-
-      clearAllBtn.onclick = () => {
+      // 清空所有数据
+      clearAllBtn.addEventListener('click', () => {
         menuOverlay.classList.remove('show');
         showModal('确定清空所有账户的全部考勤数据吗？此操作不可恢复。', { icon: '⚠️', confirmText: '清空', confirmClass: 'confirm-danger' }).then(ok => {
           if (!ok) return;
@@ -2001,14 +2055,16 @@
           currentAccount = null;
           isExpanded = false;
           saveData();
+          updateExportAccountSelect();
           renderAccountSelector();
           updateUIVisibility();
           updateQuotaDisplay();
           renderRecords();
           showToast('所有数据已清空');
         });
-      };
+      });
 
+      // PWA安装
       var deferredPrompt;
       window.addEventListener('beforeinstallprompt', function(e) {
         e.preventDefault();
@@ -2029,6 +2085,7 @@
         }
       });
 
+      // 键盘快捷键
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
           if (modalOverlay.classList.contains('show')) hideModal(false);
@@ -2037,18 +2094,19 @@
           else if (accountFormOverlay.classList.contains('show')) closeAccountForm();
           else if (editRecordOverlay.classList.contains('show')) closeEditRecord();
           else if (compManageOverlay.classList.contains('show')) closeCompManage();
+          else if (exportReportOverlay.classList.contains('show')) closeExportReport();
         }
       });
 
       function setDate() {
-        const now = new Date();
-        currentDateEl.textContent = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+        currentDateEl.textContent = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
       }
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('data:application/javascript,').catch(() => {});
       }
 
+      // 初始化
       updateCostVisibility();
       setDate();
       loadData();
