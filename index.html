@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover, shrink-to-fit=yes">
+  <title>考勤记录器</title>
+
+  <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIuiAg+WLpOiusOW9lSZ6d25qOyIsCiAgInNob3J0X25hbWUiOiAi6ICD5YukIiwKICAic3RhcnRfdXJsIjogIi4vIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZGRkZGRkIiwKICAidGhlbWVfY29sb3IiOiAiIzk5OTk5OSIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImljb24tMTkyLnBuZyIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIgogICAgfSwKICAgIHsKICAgICAgInNyYyI6ICJpY29uLTUxMi5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIKICAgIH0KICBdCn0=">
+
+  <meta name="theme-color" content="#999999">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="考勤记录">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    *:focus {
+      outline: none;
+    }
+
+    *:focus-visible {
+      outline: 2px solid #bbb;
+      outline-offset: 2px;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', 'Roboto', system-ui, sans-serif;
+      background: #d5d5d5;
+      background-image: radial-gradient(circle at 30% 20%, #e2e2e2 5%, #c8c8c8 90%);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 16px;
+      margin: 0;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 460px;
+      border-radius: 32px;
+      padding: 20px;
+      background: #d0d0d0;
+      background: linear-gradient(145deg, #dbdbdb 0%, #c2c2c2 100%);
+      box-shadow: 16px 16px 32px rgba(0,0,0,0.18), -10px -10px 28px rgba(255,255,255,0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .title-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border-radius: 28px;
+      background: #d4d4d4;
+      background: linear-gradient(180deg, #e0e0e0 0%, #c8c8c8 100%);
+      box-shadow: 8px 8px 16px rgba(0,0,0,0.12), -4px -4px 12px rgba(255,255,255,0.7);
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .app-icon {
+      font-size: 1.6rem;
+    }
+
+    .app-title {
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: #3a3a3a;
+    }
+
+    .date-badge {
+      background: #d8d8d8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #666;
+      padding: 6px 14px;
+      border-radius: 20px;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.08);
+      white-space: nowrap;
+    }
+
+    .header-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-radius: 24px;
+      background: #d4d4d4;
+      background: linear-gradient(180deg, #e0e0e0 0%, #c8c8c8 100%);
+      box-shadow: 6px 6px 12px rgba(0,0,0,0.1), -3px -3px 10px rgba(255,255,255,0.6);
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 22px;
+      padding: 12px 20px;
+      cursor: pointer;
+      background: #d4d4d4;
+      background: linear-gradient(180deg, #e6e6e6 0%, #cccccc 100%);
+      box-shadow: 4px 4px 8px rgba(0,0,0,0.1), -3px -3px 6px rgba(255,255,255,0.7);
+      transition: 0.2s;
+      font-weight: 600;
+      user-select: none;
+      color: #3a3a3a;
+      border-bottom: 1px solid #eee;
+      border-top: 1px solid #f5f5f5;
+      font-size: 0.85rem;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+      box-shadow: inset 3px 3px 8px rgba(0,0,0,0.15), inset -2px -2px 5px rgba(255,255,255,0.5);
+      background: linear-gradient(180deg, #c5c5c5 0%, #d8d8d8 100%);
+    }
+
+    .btn.primary {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-right-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .account-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #d8d8d8;
+      border-radius: 30px;
+      padding: 5px 8px 5px 14px;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.1), 0 0 0 1px #e8e8e8;
+    }
+
+    .account-selector select {
+      background: #e8e8e8;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 14px;
+      font-weight: 600;
+      color: #3a3a3a;
+      box-shadow: inset 1px 1px 4px rgba(0,0,0,0.1);
+      outline: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23777'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 30px;
+      min-width: 80px;
+    }
+
+    .content-panel {
+      border-radius: 28px;
+      padding: 22px 18px;
+      background: #d2d2d2;
+      background: linear-gradient(145deg, #dddddd 0%, #c8c8c8 100%);
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.1), 8px 8px 16px rgba(0,0,0,0.1), -4px -4px 10px rgba(255,255,255,0.6);
+      border-top: 1px solid #e8e8e8;
+    }
+
+    .record-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1 1 110px;
+      min-width: 90px;
+    }
+
+    .input-group label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      margin-left: 8px;
+      letter-spacing: 0.4px;
+    }
+
+    .input-group input,
+    .input-group select {
+      background: #e2e2e2;
+      border: none;
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.12), 0 0 0 1px #cccccc;
+      outline: none;
+      color: #2a2a2a;
+      font-weight: 500;
+      font-family: inherit;
+    }
+
+    .input-group select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23777'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 30px;
+      cursor: pointer;
+    }
+
+    .record-list {
+      max-height: 380px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.06);
+      border-radius: 22px;
+      padding: 12px 10px;
+      box-shadow: inset 2px 3px 10px rgba(0,0,0,0.12);
+    }
+
+    .record-item {
+      background: #d8d8d8;
+      background: linear-gradient(180deg, #e4e4e4 0%, #d0d0d0 100%);
+      border-radius: 22px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 3px 3px 6px rgba(0,0,0,0.1), -2px -2px 5px rgba(255,255,255,0.5);
+    }
+
+    .record-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .record-top-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 14px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .badge.sick {
+      background: #b0a0a0;
+    }
+
+    .badge.annual {
+      background: #a0a8b0;
+    }
+
+    .record-date {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #3a3a3a;
+    }
+
+    .record-note {
+      font-size: 0.75rem;
+      color: #555;
+      padding-left: 2px;
+    }
+
+    .record-cost {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #6b5050;
+      padding-left: 2px;
+    }
+
+    .record-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      background: #d4d4d4;
+      background: linear-gradient(180deg, #e6e6e6 0%, #cccccc 100%);
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1), -1px -1px 3px rgba(255,255,255,0.6);
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      color: #3a3a3a;
+      border-bottom: 1px solid #eee;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.9);
+      box-shadow: inset 2px 2px 5px rgba(0,0,0,0.15), inset -1px -1px 3px rgba(255,255,255,0.4);
+    }
+
+    .empty-hint {
+      text-align: center;
+      padding: 28px 20px;
+      color: #777;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .menu-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(40,40,40,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 350;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .menu-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .menu-popup {
+      border-radius: 32px;
+      padding: 28px 24px 24px;
+      background: #d2d2d2;
+      background: linear-gradient(145deg, #e0e0e0 0%, #c5c5c5 100%);
+      box-shadow: 20px 20px 40px rgba(0,0,0,0.25), -12px -12px 30px rgba(255,255,255,0.6);
+      max-width: 360px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+      border: 1px solid #e0e0e0;
+    }
+
+    .menu-overlay.show .menu-popup {
+      transform: scale(1);
+    }
+
+    .menu-popup .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 20px;
+      font-size: 0.9rem;
+      border-radius: 20px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(40,40,40,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 400;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      border-radius: 32px;
+      padding: 28px 24px 24px;
+      background: #d2d2d2;
+      background: linear-gradient(145deg, #e0e0e0 0%, #c5c5c5 100%);
+      box-shadow: 20px 20px 40px rgba(0,0,0,0.25), -12px -12px 30px rgba(255,255,255,0.6);
+      max-width: 360px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+      text-align: center;
+      border: 1px solid #e0e0e0;
+    }
+
+    .modal-overlay.show .modal-box {
+      transform: scale(1);
+    }
+
+    .modal-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #3a3a3a;
+    }
+
+    .modal-message {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #3a3a3a;
+      line-height: 1.6;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-buttons .btn {
+      flex: 1;
+      padding: 14px;
+    }
+
+    .btn.confirm-danger {
+      color: #8b3a3a;
+      font-weight: 700;
+    }
+
+    .btn.confirm-safe {
+      color: #3a6b4a;
+      font-weight: 700;
+    }
+
+    .toast {
+      position: fixed;
+      top: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 28px;
+      border-radius: 26px;
+      background: #5a5a5a;
+      color: #eee;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 500;
+      box-shadow: 4px 4px 12px rgba(0,0,0,0.25);
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    .tutorial-content {
+      text-align: left;
+      background: #dcdcdc;
+      border-radius: 20px;
+      padding: 18px;
+      margin: 4px 0;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.1);
+      font-size: 0.85rem;
+      line-height: 1.8;
+      color: #3a3a3a;
+    }
+
+    .tutorial-content hr {
+      border: 1px solid #c0c0c0;
+      margin: 14px 0;
+    }
+
+    .add-record-btn {
+      height: 44px;
+      padding: 0 20px;
+      flex-shrink: 0;
+    }
+
+    .form-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(40,40,40,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .form-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .form-panel {
+      border-radius: 28px;
+      padding: 24px 20px 20px;
+      background: #d2d2d2;
+      background: linear-gradient(145deg, #e0e0e0 0%, #c5c5c5 100%);
+      box-shadow: 20px 20px 40px rgba(0,0,0,0.25), -12px -12px 30px rgba(255,255,255,0.6);
+      max-width: 340px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+      border: 1px solid #e0e0e0;
+    }
+
+    .form-overlay.show .form-panel {
+      transform: scale(1);
+    }
+
+    .form-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #3a3a3a;
+      text-align: center;
+    }
+
+    .form-panel input {
+      background: #e2e2e2;
+      border: none;
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-size: 0.9rem;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.12), 0 0 0 1px #cccccc;
+      outline: none;
+      color: #2a2a2a;
+      font-weight: 500;
+      font-family: inherit;
+    }
+
+    .form-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .form-buttons .btn {
+      flex: 1;
+    }
+
+    .account-actions {
+      display: flex;
+      gap: 6px;
+      margin-left: 4px;
+    }
+
+    .btn-sm {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .welcome-hint {
+      text-align: center;
+      padding: 12px 0 4px;
+      color: #777;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+    <!-- 标题卡片 -->
+    <div class="title-card">
+      <div class="title-left">
+        <span class="app-icon">📋</span>
+        <span class="app-title">考勤记录</span>
+      </div>
+      <span class="date-badge" id="currentDate"></span>
+    </div>
+
+    <!-- 操作栏卡片 -->
+    <div class="header-card">
+      <div class="account-selector" id="accountSelectorArea">
+        <!-- 动态渲染 -->
+      </div>
+      <div class="header-right-group">
+        <button class="btn primary" id="menuBtn" title="菜单" style="font-size:1.2rem;">☰</button>
+      </div>
+    </div>
+
+    <!-- 内容面板 -->
+    <div class="content-panel" id="contentPanel">
+      <div class="welcome-hint" id="noAccountHint">👆 请先添加一个账户</div>
+      <div class="record-form" id="recordFormArea" style="display:none;">
+        <div class="input-group">
+          <label>📅 日期</label>
+          <input type="date" id="dateInput">
+        </div>
+        <div class="input-group">
+          <label>📋 类型</label>
+          <select id="typeSelect">
+            <option value="病假">🤒 病假</option>
+            <option value="年假">🏖️ 年假</option>
+          </select>
+        </div>
+        <div class="input-group" id="costGroup">
+          <label>💊 医药费</label>
+          <input type="number" id="costInput" placeholder="RM" value="0" step="0.01" min="0">
+        </div>
+        <div class="input-group" style="flex:2 1 140px;">
+          <label>📝 备注</label>
+          <input type="text" id="noteInput" placeholder="备注信息...">
+        </div>
+        <button class="btn add-record-btn" id="addRecordBtn">➕ 记录</button>
+      </div>
+      <div class="record-list" id="recordContainer"></div>
+    </div>
+
+    <!-- 弹出菜单 -->
+    <div class="menu-overlay" id="menuOverlay">
+      <div class="menu-popup">
+        <button class="btn install-menu-btn" id="installAppBtn" style="display:none;">📱 安装应用</button>
+        <button class="btn" id="tutorialBtn">📖 安装教程</button>
+        <button class="btn" id="exportBtn">📤 导出数据</button>
+        <button class="btn" id="importBtn">📥 导入数据</button>
+        <button class="btn" id="copyNotesBtn">📋 一键复制笔记</button>
+        <button class="btn confirm-danger" id="clearAllBtn">🗑️ 清空所有数据</button>
+        <button class="btn" id="menuCloseBtn">关闭</button>
+      </div>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none;">
+
+    <!-- 确认弹窗 -->
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-box">
+        <div class="modal-title" id="modalIcon">⚠️</div>
+        <div class="modal-message" id="modalMessage"></div>
+        <div class="modal-buttons">
+          <button class="btn cancel-btn" id="modalCancel">取消</button>
+          <button class="btn confirm-btn" id="modalConfirm">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 教程弹窗 -->
+    <div class="modal-overlay" id="tutorialOverlay">
+      <div class="modal-box">
+        <div class="modal-title">📲 安装到主屏幕教程</div>
+        <div class="tutorial-content">
+          <p><strong>🍎 iOS (Safari)</strong><br>点击底部中间的 <strong>分享按钮</strong>（方框箭头）→ 向下滑动找到 <strong>「添加到主屏幕」</strong> → 点击添加</p>
+          <hr>
+          <p><strong>🤖 Android (Chrome)</strong><br>点击右上角 <strong>⋮ 菜单</strong> → 选择 <strong>「添加到主屏幕」</strong> 或 <strong>「安装应用」</strong></p>
+        </div>
+        <div class="modal-buttons">
+          <button class="btn" id="tutorialCloseBtn" style="flex:1;">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 添加/编辑账户弹窗 -->
+    <div class="form-overlay" id="accountFormOverlay">
+      <div class="form-panel">
+        <div class="form-title" id="accountFormTitle">添加账户</div>
+        <input type="text" id="accountNameInput" placeholder="输入账户名称" autocomplete="off">
+        <div class="form-buttons">
+          <button class="btn" id="accountFormCancel">取消</button>
+          <button class="btn confirm-safe" id="accountFormSave">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    (function() {
+      const STORAGE_KEY = 'attendance_custom_v1';
+      let currentAccount = null;
+      let accounts = [];
+      let editingAccountName = null;
+      
+      let appData = {
+        accounts: [],
+        records: {}
+      };
+
+      // DOM 引用
+      const accountSelectorArea = document.getElementById('accountSelectorArea');
+      const noAccountHint = document.getElementById('noAccountHint');
+      const recordFormArea = document.getElementById('recordFormArea');
+      const dateInput = document.getElementById('dateInput');
+      const typeSelect = document.getElementById('typeSelect');
+      const costInput = document.getElementById('costInput');
+      const costGroup = document.getElementById('costGroup');
+      const noteInput = document.getElementById('noteInput');
+      const recordContainer = document.getElementById('recordContainer');
+      const addRecordBtn = document.getElementById('addRecordBtn');
+      const menuOverlay = document.getElementById('menuOverlay');
+      const menuBtn = document.getElementById('menuBtn');
+      const menuCloseBtn = document.getElementById('menuCloseBtn');
+      const installBtn = document.getElementById('installAppBtn');
+      const tutorialBtn = document.getElementById('tutorialBtn');
+      const tutorialOverlay = document.getElementById('tutorialOverlay');
+      const tutorialCloseBtn = document.getElementById('tutorialCloseBtn');
+      const exportBtn = document.getElementById('exportBtn');
+      const importBtn = document.getElementById('importBtn');
+      const importFile = document.getElementById('importFile');
+      const copyNotesBtn = document.getElementById('copyNotesBtn');
+      const clearAllBtn = document.getElementById('clearAllBtn');
+      const modalOverlay = document.getElementById('modalOverlay');
+      const modalIcon = document.getElementById('modalIcon');
+      const modalMessage = document.getElementById('modalMessage');
+      const modalCancel = document.getElementById('modalCancel');
+      const modalConfirm = document.getElementById('modalConfirm');
+      const toast = document.getElementById('toast');
+      const currentDateEl = document.getElementById('currentDate');
+      const accountFormOverlay = document.getElementById('accountFormOverlay');
+      const accountFormTitle = document.getElementById('accountFormTitle');
+      const accountNameInput = document.getElementById('accountNameInput');
+      const accountFormCancel = document.getElementById('accountFormCancel');
+      const accountFormSave = document.getElementById('accountFormSave');
+
+      let toastTimer;
+      let modalResolve = null;
+
+      if (dateInput) {
+        dateInput.value = new Date().toISOString().slice(0, 10);
+      }
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+      }
+
+      function showModal(message, options = {}) {
+        return new Promise(resolve => {
+          modalResolve = resolve;
+          modalMessage.textContent = message;
+          modalIcon.textContent = options.icon || '⚠️';
+          modalConfirm.className = 'btn confirm-btn' + (options.confirmClass ? ' ' + options.confirmClass : ' confirm-danger');
+          modalConfirm.textContent = options.confirmText || '确认';
+          modalCancel.textContent = options.cancelText || '取消';
+          modalCancel.style.display = options.showCancel === false ? 'none' : '';
+          modalOverlay.classList.add('show');
+        });
+      }
+
+      function hideModal(result) {
+        modalOverlay.classList.remove('show');
+        if (modalResolve) { modalResolve(result); modalResolve = null; }
+      }
+      modalConfirm.onclick = () => hideModal(true);
+      modalCancel.onclick = () => hideModal(false);
+      modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) hideModal(false); });
+
+      function loadData() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          try {
+            appData = JSON.parse(stored);
+            if (!appData.accounts || !Array.isArray(appData.accounts)) appData.accounts = [];
+            if (!appData.records || typeof appData.records !== 'object') appData.records = {};
+            appData.accounts.forEach(acc => {
+              if (!Array.isArray(appData.records[acc])) appData.records[acc] = [];
+            });
+            accounts = [...appData.accounts];
+          } catch (e) {
+            appData = { accounts: [], records: {} };
+            accounts = [];
+          }
+        } else {
+          appData = { accounts: [], records: {} };
+          accounts = [];
+        }
+        if (accounts.length > 0) {
+          if (!currentAccount || !accounts.includes(currentAccount)) {
+            currentAccount = accounts[0];
+          }
+        } else {
+          currentAccount = null;
+        }
+        renderAccountSelector();
+        updateUIVisibility();
+        renderRecords();
+      }
+
+      function saveData() {
+        appData.accounts = accounts;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      }
+
+      function renderAccountSelector() {
+        if (accounts.length === 0) {
+          accountSelectorArea.innerHTML = `
+            <span style="color:#888;font-weight:600;font-size:0.85rem;padding:8px 12px;">暂无账户</span>
+            <button class="btn primary btn-sm" id="addFirstAccountBtn" title="添加账户" style="font-size:1.2rem;">➕</button>
+          `;
+          const addFirstBtn = document.getElementById('addFirstAccountBtn');
+          if (addFirstBtn) {
+            addFirstBtn.addEventListener('click', () => openAccountForm());
+          }
+        } else {
+          let optionsHtml = accounts.map(acc => 
+            `<option value="${escapeHtml(acc)}" ${acc === currentAccount ? 'selected' : ''}>${escapeHtml(acc)}</option>`
+          ).join('');
+          accountSelectorArea.innerHTML = `
+            <span style="color:#555;font-weight:600;font-size:0.9rem;">👤</span>
+            <select id="accountSelect">${optionsHtml}</select>
+            <button class="btn primary btn-sm" id="addAccountBtn" title="添加账户" style="font-size:1.1rem;">➕</button>
+            <button class="btn primary btn-sm" id="editAccountBtn" title="编辑账户" style="font-size:0.9rem;">✎</button>
+            <button class="btn primary btn-sm" id="deleteAccountBtn" title="删除账户" style="font-size:0.9rem;">🗑</button>
+          `;
+          const accountSelect = document.getElementById('accountSelect');
+          const addBtn = document.getElementById('addAccountBtn');
+          const editBtn = document.getElementById('editAccountBtn');
+          const deleteBtn = document.getElementById('deleteAccountBtn');
+          
+          if (accountSelect) {
+            accountSelect.addEventListener('change', (e) => {
+              currentAccount = e.target.value;
+              renderRecords();
+            });
+          }
+          if (addBtn) addBtn.addEventListener('click', () => openAccountForm());
+          if (editBtn) editBtn.addEventListener('click', () => {
+            if (currentAccount) openAccountForm(currentAccount);
+          });
+          if (deleteBtn) deleteBtn.addEventListener('click', () => deleteCurrentAccount());
+        }
+      }
+
+      function updateUIVisibility() {
+        if (accounts.length === 0) {
+          noAccountHint.style.display = '';
+          recordFormArea.style.display = 'none';
+        } else {
+          noAccountHint.style.display = 'none';
+          recordFormArea.style.display = '';
+        }
+      }
+
+      function openAccountForm(editName = null) {
+        editingAccountName = editName;
+        if (editName) {
+          accountFormTitle.textContent = '编辑账户';
+          accountNameInput.value = editName;
+        } else {
+          accountFormTitle.textContent = '添加账户';
+          accountNameInput.value = '';
+        }
+        accountFormOverlay.classList.add('show');
+        setTimeout(() => accountNameInput.focus(), 150);
+      }
+
+      function closeAccountForm() {
+        accountFormOverlay.classList.remove('show');
+        editingAccountName = null;
+        accountNameInput.value = '';
+      }
+
+      accountFormCancel.addEventListener('click', closeAccountForm);
+      accountFormOverlay.addEventListener('click', e => { if (e.target === accountFormOverlay) closeAccountForm(); });
+
+      accountFormSave.addEventListener('click', () => {
+        const name = accountNameInput.value.trim();
+        if (!name) { showToast('请输入账户名称'); return; }
+        
+        if (editingAccountName) {
+          // 编辑模式
+          if (name !== editingAccountName && accounts.includes(name)) {
+            showToast('账户名称已存在');
+            return;
+          }
+          const idx = accounts.indexOf(editingAccountName);
+          if (idx >= 0) {
+            accounts[idx] = name;
+            // 迁移记录
+            if (appData.records[editingAccountName]) {
+              appData.records[name] = appData.records[editingAccountName];
+              delete appData.records[editingAccountName];
+            }
+            if (currentAccount === editingAccountName) {
+              currentAccount = name;
+            }
+          }
+        } else {
+          // 添加模式
+          if (accounts.includes(name)) {
+            showToast('账户名称已存在');
+            return;
+          }
+          accounts.push(name);
+          appData.records[name] = [];
+          if (!currentAccount) {
+            currentAccount = name;
+          }
+        }
+        
+        saveData();
+        closeAccountForm();
+        renderAccountSelector();
+        updateUIVisibility();
+        renderRecords();
+        showToast(editingAccountName ? '账户已更新' : '账户已添加');
+      });
+
+      function deleteCurrentAccount() {
+        if (!currentAccount || accounts.length === 0) return;
+        const name = currentAccount;
+        showModal(`确定删除账户「${name}」及其所有记录吗？`, { icon: '🗑️', confirmText: '删除', confirmClass: 'confirm-danger' }).then(ok => {
+          if (!ok) return;
+          accounts = accounts.filter(a => a !== name);
+          delete appData.records[name];
+          if (currentAccount === name) {
+            currentAccount = accounts.length > 0 ? accounts[0] : null;
+          }
+          saveData();
+          renderAccountSelector();
+          updateUIVisibility();
+          renderRecords();
+          showToast(`账户「${name}」已删除`);
+        });
+      }
+
+      function getCurrentRecords() {
+        if (!currentAccount || !appData.records[currentAccount]) return [];
+        return appData.records[currentAccount];
+      }
+
+      function renderRecords() {
+        if (!recordContainer) return;
+        if (!currentAccount) {
+          recordContainer.innerHTML = '<div class="empty-hint">📭 请先添加账户</div>';
+          return;
+        }
+        const records = getCurrentRecords();
+        if (records.length === 0) {
+          recordContainer.innerHTML = '<div class="empty-hint">📭 暂无考勤记录</div>';
+          return;
+        }
+        recordContainer.innerHTML = records.map((rec, idx) => {
+          const costDisplay = rec.type === '病假' && rec.cost > 0 ? `💊 RM ${parseFloat(rec.cost).toFixed(2)}` : '';
+          return `
+            <div class="record-item">
+              <div class="record-left">
+                <div class="record-top-row">
+                  <span class="badge ${rec.type === '病假' ? 'sick' : 'annual'}">${rec.type}</span>
+                  <span class="record-date">${rec.date}</span>
+                </div>
+                ${rec.note ? `<div class="record-note">📝 ${escapeHtml(rec.note)}</div>` : ''}
+                ${costDisplay ? `<div class="record-cost">${costDisplay}</div>` : ''}
+              </div>
+              <div class="record-actions">
+                <button class="icon-btn del-record" data-index="${idx}" title="删除">🗑️</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        recordContainer.querySelectorAll('.del-record').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const index = parseInt(btn.dataset.index);
+            if (!isNaN(index)) deleteRecord(index);
+          });
+        });
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+      }
+
+      function deleteRecord(index) {
+        const records = getCurrentRecords();
+        if (index >= 0 && index < records.length) {
+          const rec = records[index];
+          showModal(`确定删除 ${rec.date} 的「${rec.type}」记录吗？`, { icon: '🗑️', confirmText: '删除', confirmClass: 'confirm-danger' }).then(ok => {
+            if (!ok) return;
+            records.splice(index, 1);
+            saveData();
+            renderRecords();
+            showToast('已删除');
+          });
+        }
+      }
+
+      typeSelect.addEventListener('change', () => {
+        if (typeSelect.value === '病假') {
+          costGroup.style.display = '';
+        } else {
+          costGroup.style.display = 'none';
+          costInput.value = '0';
+        }
+      });
+
+      addRecordBtn.addEventListener('click', () => {
+        if (!currentAccount) { showToast('请先添加账户'); return; }
+        const date = dateInput.value;
+        const type = typeSelect.value;
+        const cost = type === '病假' ? (parseFloat(costInput.value) || 0) : 0;
+        const note = noteInput.value.trim();
+        if (!date) { showToast('请选择日期'); return; }
+        getCurrentRecords().push({
+          date, type, cost, note,
+          account: currentAccount,
+          timestamp: Date.now()
+        });
+        saveData();
+        renderRecords();
+        noteInput.value = '';
+        costInput.value = '0';
+        showToast('记录已添加');
+      });
+
+      menuBtn.onclick = () => menuOverlay.classList.add('show');
+      menuCloseBtn.onclick = () => menuOverlay.classList.remove('show');
+      menuOverlay.addEventListener('click', e => { if (e.target === menuOverlay) menuOverlay.classList.remove('show'); });
+
+      tutorialBtn.onclick = () => { menuOverlay.classList.remove('show'); tutorialOverlay.classList.add('show'); };
+      tutorialCloseBtn.onclick = () => tutorialOverlay.classList.remove('show');
+      tutorialOverlay.addEventListener('click', e => { if (e.target === tutorialOverlay) tutorialOverlay.classList.remove('show'); });
+
+      exportBtn.onclick = () => {
+        menuOverlay.classList.remove('show');
+        const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = '考勤备份_' + new Date().toISOString().slice(0, 10) + '.json';
+        a.click();
+        showToast('导出成功');
+      };
+
+      importBtn.onclick = () => { menuOverlay.classList.remove('show'); importFile.click(); };
+      importFile.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          try {
+            const imported = JSON.parse(ev.target.result);
+            if (imported.accounts && imported.records) {
+              showModal(`导入 ${imported.accounts.length} 个账户的数据？`, { icon: '📥', confirmText: '导入', confirmClass: 'confirm-safe' }).then(ok => {
+                if (!ok) { importFile.value = ''; return; }
+                appData = imported;
+                accounts = imported.accounts || [];
+                if (accounts.length > 0 && (!currentAccount || !accounts.includes(currentAccount))) {
+                  currentAccount = accounts[0];
+                } else if (accounts.length === 0) {
+                  currentAccount = null;
+                }
+                saveData();
+                renderAccountSelector();
+                updateUIVisibility();
+                renderRecords();
+                showToast('导入成功');
+                importFile.value = '';
+              });
+            } else {
+              showToast('无效的考勤数据文件');
+              importFile.value = '';
+            }
+          } catch (ex) {
+            showToast('解析失败');
+            importFile.value = '';
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      copyNotesBtn.onclick = async () => {
+        menuOverlay.classList.remove('show');
+        if (!currentAccount) { showToast('请先添加账户'); return; }
+        const records = getCurrentRecords();
+        if (records.length === 0) { showToast('当前账户无记录'); return; }
+        const text = records.map(r => {
+          let line = `[${r.date}] ${r.type}`;
+          if (r.type === '病假' && r.cost > 0) line += ` | 医药费: RM ${parseFloat(r.cost).toFixed(2)}`;
+          if (r.note) line += ` | 备注: ${r.note}`;
+          return line;
+        }).join('\n');
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast('笔记已复制到剪贴板');
+        } catch {
+          showToast('复制失败，请手动复制');
+        }
+      };
+
+      clearAllBtn.onclick = () => {
+        menuOverlay.classList.remove('show');
+        showModal('确定清空所有账户的全部考勤数据吗？此操作不可恢复。', { icon: '⚠️', confirmText: '清空', confirmClass: 'confirm-danger' }).then(ok => {
+          if (!ok) return;
+          appData = { accounts: [], records: {} };
+          accounts = [];
+          currentAccount = null;
+          saveData();
+          renderAccountSelector();
+          updateUIVisibility();
+          renderRecords();
+          showToast('所有数据已清空');
+        });
+      };
+
+      var deferredPrompt;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'flex';
+      });
+      installBtn.addEventListener('click', async function() {
+        menuOverlay.classList.remove('show');
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          await deferredPrompt.userChoice;
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+          showToast('安装完成');
+        } else {
+          showToast('请查看安装教程');
+          tutorialOverlay.classList.add('show');
+        }
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          if (modalOverlay.classList.contains('show')) hideModal(false);
+          else if (tutorialOverlay.classList.contains('show')) tutorialOverlay.classList.remove('show');
+          else if (menuOverlay.classList.contains('show')) menuOverlay.classList.remove('show');
+          else if (accountFormOverlay.classList.contains('show')) closeAccountForm();
+        }
+      });
+
+      function setDate() {
+        const now = new Date();
+        currentDateEl.textContent = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+      }
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('data:application/javascript,').catch(() => {});
+      }
+
+      typeSelect.dispatchEvent(new Event('change'));
+      setDate();
+      loadData();
+    })();
+  </script>
+</body>
+</html>
