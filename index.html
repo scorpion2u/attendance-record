@@ -181,75 +181,126 @@
       flex: 1;
     }
 
-    .quota-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    /* ========== 额度卡片设计 ========== */
+    .quota-section {
+      display: flex;
+      flex-direction: column;
       gap: 8px;
     }
 
-    .quota-card {
+    /* 第一行：3个配额假 */
+    .quota-row-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* 第二行：2个无限制假 - 窄版 */
+    .quota-row-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .quota-card-item {
       border-radius: 20px;
-      padding: 12px 14px;
+      padding: 12px 10px;
       background: #d4d4d4;
       background: linear-gradient(180deg, #e0e0e0 0%, #c8c8c8 100%);
       box-shadow: 6px 6px 12px rgba(0,0,0,0.1), -3px -3px 10px rgba(255,255,255,0.6);
       border-bottom: 1px solid #e8e8e8;
-      display: flex;
-      justify-content: space-around;
-      gap: 8px;
-    }
-
-    .quota-item {
       text-align: center;
-      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: transform 0.2s;
     }
 
-    .quota-label {
+    /* 第二行卡片更窄 */
+    .quota-row-bottom .quota-card-item {
+      padding: 8px 12px;
+      gap: 1px;
+    }
+
+    .quota-card-item:active {
+      transform: scale(0.97);
+    }
+
+    .quota-card-icon {
+      font-size: 1.3rem;
+    }
+
+    .quota-row-bottom .quota-card-icon {
+      font-size: 1rem;
+    }
+
+    .quota-card-label {
       font-size: 0.6rem;
       font-weight: 700;
       color: #777;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin-bottom: 4px;
+      letter-spacing: 0.4px;
     }
 
-    .quota-values {
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 3px;
-    }
-
-    .quota-remaining {
-      font-size: 1.3rem;
-      font-weight: 800;
-      color: #3a3a3a;
-    }
-
-    .quota-total {
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: #999;
-    }
-
-    .quota-used {
+    .quota-row-bottom .quota-card-label {
       font-size: 0.55rem;
+    }
+
+    .quota-card-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .quota-row-bottom .quota-card-value {
+      font-size: 1.2rem;
+    }
+
+    .quota-card-detail {
+      font-size: 0.6rem;
       font-weight: 600;
       color: #999;
+    }
+
+    .quota-row-bottom .quota-card-detail {
+      font-size: 0.55rem;
+    }
+
+    /* 各类型颜色 */
+    .quota-card-item.sick .quota-card-value { color: #8b6b6b; }
+    .quota-card-item.annual .quota-card-value { color: #6b7b8b; }
+    .quota-card-item.comp .quota-card-value { color: #7b8b6b; }
+    .quota-card-item.unpaid .quota-card-value { color: #9b8958; }
+    .quota-card-item.other .quota-card-value { color: #6b8b8b; }
+
+    .quota-card-value.quota-warning { color: #c0392b !important; }
+
+    /* 进度条 */
+    .quota-progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 3px;
+    }
+
+    .quota-row-bottom .quota-progress-bar {
+      height: 3px;
       margin-top: 2px;
     }
 
-    .quota-divider {
-      width: 1px;
-      background: #d0d0d0;
-      box-shadow: 0 0 0 1px #e8e8e8;
+    .quota-progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
     }
 
-    .quota-item.sick .quota-remaining { color: #8b6b6b; }
-    .quota-item.annual .quota-remaining { color: #6b7b8b; }
-    .quota-item.comp .quota-remaining { color: #7b8b6b; }
-    .quota-item.unpaid .quota-remaining { color: #9b8958; }
-    .quota-item.other .quota-remaining { color: #6b8b8b; }
+    .quota-progress-fill.sick { background: #8b6b6b; }
+    .quota-progress-fill.annual { background: #6b7b8b; }
+    .quota-progress-fill.comp { background: #7b8b6b; }
+    .quota-progress-fill.unpaid { background: #9b8958; opacity: 0.5; }
+    .quota-progress-fill.other { background: #6b8b8b; opacity: 0.5; }
 
     .content-panel {
       border-radius: 28px;
@@ -472,7 +523,7 @@
       position: fixed;
       inset: 0;
       background: rgba(40,40,40,0.5);
-        display: flex;
+      display: flex;
       align-items: center;
       justify-content: center;
       z-index: 350;
@@ -758,52 +809,47 @@
       </div>
     </div>
 
-    <div class="quota-grid" id="quotaGrid" style="display:none;">
-      <div class="quota-card" id="quotaRow1">
-        <div class="quota-item sick">
-          <div class="quota-label">🤒 病假</div>
-          <div class="quota-values">
-            <span class="quota-remaining" id="sickRemaining">0</span>
-            <span class="quota-total" id="sickTotal">/0天</span>
-          </div>
-          <div class="quota-used" id="sickUsed">已用0天</div>
+    <!-- 全新额度卡片区域 -->
+    <div class="quota-section" id="quotaSection" style="display:none;">
+      <!-- 第一行：配额假 -->
+      <div class="quota-row-top">
+        <div class="quota-card-item sick" id="sickCard">
+          <div class="quota-card-icon">🤒</div>
+          <div class="quota-card-label">病假</div>
+          <div class="quota-card-value" id="sickValue">14</div>
+          <div class="quota-card-detail" id="sickDetail">/14天</div>
+          <div class="quota-progress-bar"><div class="quota-progress-fill sick" id="sickBar" style="width:0%"></div></div>
         </div>
-        <div class="quota-divider"></div>
-        <div class="quota-item annual">
-          <div class="quota-label">🏖️ 年假</div>
-          <div class="quota-values">
-            <span class="quota-remaining" id="annualRemaining">0</span>
-            <span class="quota-total" id="annualTotal">/0天</span>
-          </div>
-          <div class="quota-used" id="annualUsed">已用0天</div>
+        <div class="quota-card-item annual" id="annualCard">
+          <div class="quota-card-icon">🏖️</div>
+          <div class="quota-card-label">年假</div>
+          <div class="quota-card-value" id="annualValue">14</div>
+          <div class="quota-card-detail" id="annualDetail">/14天</div>
+          <div class="quota-progress-bar"><div class="quota-progress-fill annual" id="annualBar" style="width:0%"></div></div>
         </div>
-        <div class="quota-divider"></div>
-        <div class="quota-item comp">
-          <div class="quota-label">🔄 补给假</div>
-          <div class="quota-values">
-            <span class="quota-remaining" id="compRemaining">0</span>
-            <span class="quota-total" id="compTotal">/0天</span>
-          </div>
-          <div class="quota-used" id="compUsed">已用0天</div>
+        <div class="quota-card-item comp" id="compCard">
+          <div class="quota-card-icon">🔄</div>
+          <div class="quota-card-label">补给假</div>
+          <div class="quota-card-value" id="compValue">0</div>
+          <div class="quota-card-detail" id="compDetail">/0天</div>
+          <div class="quota-progress-bar"><div class="quota-progress-fill comp" id="compBar" style="width:0%"></div></div>
         </div>
       </div>
-      <div class="quota-card" id="quotaRow2">
-        <div class="quota-item unpaid">
-          <div class="quota-label">💸 无薪假</div>
-          <div class="quota-values">
-            <span class="quota-remaining" id="unpaidCount">0</span>
-            <span class="quota-total">天</span>
-          </div>
-          <div class="quota-used">不计配额</div>
+      <!-- 第二行：无限制假 - 窄版 -->
+      <div class="quota-row-bottom">
+        <div class="quota-card-item unpaid" id="unpaidCard">
+          <div class="quota-card-icon">💸</div>
+          <div class="quota-card-label">无薪假</div>
+          <div class="quota-card-value" id="unpaidValue">0</div>
+          <div class="quota-card-detail">不计配额</div>
+          <div class="quota-progress-bar"><div class="quota-progress-fill unpaid" id="unpaidBar" style="width:10%"></div></div>
         </div>
-        <div class="quota-divider"></div>
-        <div class="quota-item other">
-          <div class="quota-label">📌 其他</div>
-          <div class="quota-values">
-            <span class="quota-remaining" id="otherCount">0</span>
-            <span class="quota-total">天</span>
-          </div>
-          <div class="quota-used">不计配额</div>
+        <div class="quota-card-item other" id="otherCard">
+          <div class="quota-card-icon">📌</div>
+          <div class="quota-card-label">其他</div>
+          <div class="quota-card-value" id="otherValue">0</div>
+          <div class="quota-card-detail">不计配额</div>
+          <div class="quota-progress-bar"><div class="quota-progress-fill other" id="otherBar" style="width:10%"></div></div>
         </div>
       </div>
     </div>
@@ -942,13 +988,12 @@
   <script>
     (function() {
       const STORAGE_KEY = 'attendance_quota_v2';
-      const COLLAPSE_THRESHOLD = 8;
       
       let currentAccount = null;
       let accounts = [];
       let editingAccountName = null;
       let editingRecordIndex = null;
-      let isExpanded = false; // 默认收起
+      let isExpanded = false;
       
       let appData = {
         accounts: [],
@@ -961,18 +1006,22 @@
       const accountSelectorArea = document.getElementById('accountSelectorArea');
       const noAccountHint = document.getElementById('noAccountHint');
       const recordFormArea = document.getElementById('recordFormArea');
-      const quotaGrid = document.getElementById('quotaGrid');
-      const sickRemainingEl = document.getElementById('sickRemaining');
-      const sickTotalEl = document.getElementById('sickTotal');
-      const sickUsedEl = document.getElementById('sickUsed');
-      const annualRemainingEl = document.getElementById('annualRemaining');
-      const annualTotalEl = document.getElementById('annualTotal');
-      const annualUsedEl = document.getElementById('annualUsed');
-      const compRemainingEl = document.getElementById('compRemaining');
-      const compTotalEl = document.getElementById('compTotal');
-      const compUsedEl = document.getElementById('compUsed');
-      const unpaidCountEl = document.getElementById('unpaidCount');
-      const otherCountEl = document.getElementById('otherCount');
+      const quotaSection = document.getElementById('quotaSection');
+      
+      const sickValue = document.getElementById('sickValue');
+      const sickDetail = document.getElementById('sickDetail');
+      const sickBar = document.getElementById('sickBar');
+      const annualValue = document.getElementById('annualValue');
+      const annualDetail = document.getElementById('annualDetail');
+      const annualBar = document.getElementById('annualBar');
+      const compValue = document.getElementById('compValue');
+      const compDetail = document.getElementById('compDetail');
+      const compBar = document.getElementById('compBar');
+      const unpaidValue = document.getElementById('unpaidValue');
+      const unpaidBar = document.getElementById('unpaidBar');
+      const otherValue = document.getElementById('otherValue');
+      const otherBar = document.getElementById('otherBar');
+      
       const dateInput = document.getElementById('dateInput');
       const typeSelect = document.getElementById('typeSelect');
       const costInput = document.getElementById('costInput');
@@ -1110,10 +1159,11 @@
 
       function updateQuotaDisplay() {
         if (!currentAccount) {
-          quotaGrid.style.display = 'none';
+          quotaSection.style.display = 'none';
           return;
         }
-        quotaGrid.style.display = '';
+        quotaSection.style.display = '';
+        
         const quota = getQuota(currentAccount);
         const sickUsed = getUsedDays(currentAccount, '病假');
         const annualUsed = getUsedDays(currentAccount, '年假');
@@ -1124,27 +1174,31 @@
         const sickRemaining = Math.max(0, (quota.sick || 0) - sickUsed);
         const annualRemaining = Math.max(0, (quota.annual || 0) - annualUsed);
         const compRemaining = Math.max(0, (quota.comp || 0) - compUsed);
+        
+        const sickPercent = (quota.sick || 0) > 0 ? Math.min(100, Math.round((sickUsed / (quota.sick || 1)) * 100)) : 0;
+        const annualPercent = (quota.annual || 0) > 0 ? Math.min(100, Math.round((annualUsed / (quota.annual || 1)) * 100)) : 0;
+        const compPercent = (quota.comp || 0) > 0 ? Math.min(100, Math.round((compUsed / (quota.comp || 1)) * 100)) : 0;
 
-        sickRemainingEl.textContent = sickRemaining;
-        sickTotalEl.textContent = '/' + (quota.sick || 0) + '天';
-        sickUsedEl.textContent = '已用' + sickUsed + '天';
-        
-        annualRemainingEl.textContent = annualRemaining;
-        annualTotalEl.textContent = '/' + (quota.annual || 0) + '天';
-        annualUsedEl.textContent = '已用' + annualUsed + '天';
-        
-        compRemainingEl.textContent = compRemaining;
-        compTotalEl.textContent = '/' + (quota.comp || 0) + '天';
-        compUsedEl.textContent = '已用' + compUsed + '天';
-        
-        unpaidCountEl.textContent = unpaidUsed;
-        otherCountEl.textContent = otherUsed;
+        sickValue.textContent = sickRemaining;
+        sickValue.className = 'quota-card-value ' + (sickRemaining === 0 && (quota.sick || 0) > 0 ? 'quota-warning' : '');
+        sickDetail.textContent = '已用' + sickUsed + '天 / ' + (quota.sick || 0) + '天';
+        sickBar.style.width = sickPercent + '%';
 
-        sickRemainingEl.className = 'quota-remaining ' + (sickRemaining === 0 ? 'quota-warning' : 'quota-safe');
-        annualRemainingEl.className = 'quota-remaining ' + (annualRemaining === 0 ? 'quota-warning' : 'quota-safe');
-        compRemainingEl.className = 'quota-remaining ' + (compRemaining === 0 ? 'quota-warning' : 'quota-safe');
-        unpaidCountEl.className = 'quota-remaining quota-safe';
-        otherCountEl.className = 'quota-remaining quota-safe';
+        annualValue.textContent = annualRemaining;
+        annualValue.className = 'quota-card-value ' + (annualRemaining === 0 && (quota.annual || 0) > 0 ? 'quota-warning' : '');
+        annualDetail.textContent = '已用' + annualUsed + '天 / ' + (quota.annual || 0) + '天';
+        annualBar.style.width = annualPercent + '%';
+
+        compValue.textContent = compRemaining;
+        compValue.className = 'quota-card-value ' + (compRemaining === 0 && (quota.comp || 0) > 0 ? 'quota-warning' : '');
+        compDetail.textContent = '已用' + compUsed + '天 / ' + (quota.comp || 0) + '天';
+        compBar.style.width = compPercent + '%';
+
+        unpaidValue.textContent = unpaidUsed;
+        unpaidBar.style.width = Math.min(unpaidUsed * 5, 100) + '%';
+
+        otherValue.textContent = otherUsed;
+        otherBar.style.width = Math.min(otherUsed * 5, 100) + '%';
       }
 
       function renderAccountSelector() {
@@ -1193,11 +1247,11 @@
         if (accounts.length === 0) {
           noAccountHint.style.display = '';
           recordFormArea.style.display = 'none';
-          quotaGrid.style.display = 'none';
+          quotaSection.style.display = 'none';
         } else {
           noAccountHint.style.display = 'none';
           recordFormArea.style.display = '';
-          quotaGrid.style.display = '';
+          quotaSection.style.display = '';
         }
       }
 
@@ -1320,7 +1374,6 @@
       function renderSummaryBar() {
         const records = getCurrentRecords();
         
-        // 始终显示摘要栏（只要有记录）
         if (records.length === 0) {
           recordSummaryArea.innerHTML = '';
           recordContainer.classList.add('collapsed-empty');
@@ -1375,13 +1428,11 @@
         
         renderSummaryBar();
         
-        // 默认收起：不显示任何记录
         if (!isExpanded) {
           recordContainer.innerHTML = '';
           return;
         }
         
-        // 展开时显示所有记录
         recordContainer.innerHTML = records.map((rec, idx) => {
           const costDisplay = rec.type === '病假' && rec.cost > 0 ? `💊 RM ${parseFloat(rec.cost).toFixed(2)}` : '';
           return `
@@ -1560,10 +1611,8 @@
         });
         saveData();
         updateQuotaDisplay();
-        renderRecords();
         noteInput.value = '';
         costInput.value = '0';
-        // 添加新记录后自动展开，方便查看
         isExpanded = true;
         renderRecords();
         showToast('记录已添加');
