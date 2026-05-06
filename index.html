@@ -814,6 +814,36 @@
       </div>
     </div>
 
+    <!-- 编辑记录弹窗 -->
+    <div class="form-overlay" id="editRecordOverlay">
+      <div class="form-panel">
+        <div class="form-title">✏️ 编辑记录</div>
+        <div class="input-group">
+          <label>📅 日期</label>
+          <input type="date" id="editDateInput">
+        </div>
+        <div class="input-group">
+          <label>📋 类型</label>
+          <select id="editTypeSelect">
+            <option value="病假">🤒 病假</option>
+            <option value="年假">🏖️ 年假</option>
+          </select>
+        </div>
+        <div class="input-group" id="editCostGroup">
+          <label>💊 医药费</label>
+          <input type="number" id="editCostInput" placeholder="RM" value="0" step="0.01" min="0">
+        </div>
+        <div class="input-group">
+          <label>📝 备注</label>
+          <input type="text" id="editNoteInput" placeholder="备注信息...">
+        </div>
+        <div class="form-buttons">
+          <button class="btn" id="editRecordCancel">取消</button>
+          <button class="btn confirm-safe" id="editRecordSave">保存</button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast" id="toast"></div>
   </div>
 
@@ -823,6 +853,7 @@
       let currentAccount = null;
       let accounts = [];
       let editingAccountName = null;
+      let editingRecordIndex = null;
       
       let appData = {
         accounts: [],
@@ -873,6 +904,16 @@
       const annualQuotaInput = document.getElementById('annualQuotaInput');
       const accountFormCancel = document.getElementById('accountFormCancel');
       const accountFormSave = document.getElementById('accountFormSave');
+
+      // 编辑记录弹窗元素
+      const editRecordOverlay = document.getElementById('editRecordOverlay');
+      const editDateInput = document.getElementById('editDateInput');
+      const editTypeSelect = document.getElementById('editTypeSelect');
+      const editCostInput = document.getElementById('editCostInput');
+      const editCostGroup = document.getElementById('editCostGroup');
+      const editNoteInput = document.getElementById('editNoteInput');
+      const editRecordCancel = document.getElementById('editRecordCancel');
+      const editRecordSave = document.getElementById('editRecordSave');
 
       let toastTimer;
       let modalResolve = null;
@@ -1161,11 +1202,19 @@
                 ${costDisplay ? `<div class="record-cost">${costDisplay}</div>` : ''}
               </div>
               <div class="record-actions">
+                <button class="icon-btn edit-record" data-index="${idx}" title="编辑">✏️</button>
                 <button class="icon-btn del-record" data-index="${idx}" title="删除">🗑️</button>
               </div>
             </div>
           `;
         }).join('');
+
+        recordContainer.querySelectorAll('.edit-record').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const index = parseInt(btn.dataset.index);
+            if (!isNaN(index)) openEditRecord(index);
+          });
+        });
 
         recordContainer.querySelectorAll('.del-record').forEach(btn => {
           btn.addEventListener('click', (e) => {
@@ -1181,6 +1230,91 @@
         d.textContent = str;
         return d.innerHTML;
       }
+
+      function openEditRecord(index) {
+        const records = getCurrentRecords();
+        if (index < 0 || index >= records.length) return;
+        const rec = records[index];
+        editingRecordIndex = index;
+        
+        editDateInput.value = rec.date;
+        editTypeSelect.value = rec.type;
+        editCostInput.value = rec.cost || 0;
+        editNoteInput.value = rec.note || '';
+        
+        if (rec.type === '病假') {
+          editCostGroup.style.display = '';
+        } else {
+          editCostGroup.style.display = 'none';
+        }
+        
+        editRecordOverlay.classList.add('show');
+        setTimeout(() => editDateInput.focus(), 150);
+      }
+
+      function closeEditRecord() {
+        editRecordOverlay.classList.remove('show');
+        editingRecordIndex = null;
+      }
+
+      editTypeSelect.addEventListener('change', () => {
+        if (editTypeSelect.value === '病假') {
+          editCostGroup.style.display = '';
+        } else {
+          editCostGroup.style.display = 'none';
+          editCostInput.value = '0';
+        }
+      });
+
+      editRecordCancel.addEventListener('click', closeEditRecord);
+      editRecordOverlay.addEventListener('click', e => { if (e.target === editRecordOverlay) closeEditRecord(); });
+
+      editRecordSave.addEventListener('click', () => {
+        if (editingRecordIndex === null) return;
+        const records = getCurrentRecords();
+        if (editingRecordIndex < 0 || editingRecordIndex >= records.length) return;
+        
+        const date = editDateInput.value;
+        const type = editTypeSelect.value;
+        const cost = type === '病假' ? (parseFloat(editCostInput.value) || 0) : 0;
+        const note = editNoteInput.value.trim();
+        
+        if (!date) { showToast('请选择日期'); return; }
+        
+        // 检查配额（排除当前编辑的记录）
+        const oldType = records[editingRecordIndex].type;
+        const quota = getQuota(currentAccount);
+        let usedDays = getUsedDays(currentAccount, type);
+        
+        // 如果类型改变了，需要重新计算
+        if (oldType !== type) {
+          // 新类型的已用天数（不包括当前记录）
+          // usedDays 已经统计了新类型的数量，但如果旧类型不同，当前记录还未从新类型中移除
+          // 实际上 getUsedDays 会统计所有 type 的记录，包括当前编辑的
+          // 由于我们还没保存，所以当前记录的 oldType 还在旧类型中
+          // 需要检查新类型的配额
+          const totalQuota = type === '病假' ? (quota.sick || 0) : (quota.annual || 0);
+          if (usedDays >= totalQuota) {
+            showToast(`⚠️ ${type}配额已用完（${totalQuota}天），无法更改`);
+            return;
+          }
+        }
+        
+        records[editingRecordIndex] = {
+          ...records[editingRecordIndex],
+          date,
+          type,
+          cost,
+          note,
+          timestamp: Date.now()
+        };
+        
+        saveData();
+        updateQuotaDisplay();
+        renderRecords();
+        closeEditRecord();
+        showToast('记录已更新');
+      });
 
       function deleteRecord(index) {
         const records = getCurrentRecords();
@@ -1400,6 +1534,7 @@
           else if (tutorialOverlay.classList.contains('show')) tutorialOverlay.classList.remove('show');
           else if (menuOverlay.classList.contains('show')) menuOverlay.classList.remove('show');
           else if (accountFormOverlay.classList.contains('show')) closeAccountForm();
+          else if (editRecordOverlay.classList.contains('show')) closeEditRecord();
         }
       });
 
