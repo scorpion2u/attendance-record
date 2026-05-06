@@ -98,12 +98,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 18px;
+      padding: 12px 14px;
       border-radius: 24px;
       background: #d4d4d4;
       background: linear-gradient(180deg, #e0e0e0 0%, #c8c8c8 100%);
       box-shadow: 6px 6px 12px rgba(0,0,0,0.1), -3px -3px 10px rgba(255,255,255,0.6);
       border-bottom: 1px solid #e8e8e8;
+      gap: 6px;
     }
 
     .btn {
@@ -130,11 +131,11 @@
     }
 
     .btn.primary {
-      width: 44px;
-      height: 44px;
+      width: 34px;
+      height: 34px;
       padding: 0;
       border-radius: 50%;
-      font-size: 1.3rem;
+      font-size: 1rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -143,16 +144,16 @@
     .header-right-group {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
     }
 
     .account-selector {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       background: #d8d8d8;
       border-radius: 30px;
-      padding: 5px 8px 5px 14px;
+      padding: 4px 6px 4px 10px;
       box-shadow: inset 2px 2px 6px rgba(0,0,0,0.1), 0 0 0 1px #e8e8e8;
     }
 
@@ -160,21 +161,21 @@
       background: #e8e8e8;
       border: none;
       border-radius: 25px;
-      padding: 10px 14px;
+      padding: 8px 10px;
       font-weight: 600;
       color: #3a3a3a;
       box-shadow: inset 1px 1px 4px rgba(0,0,0,0.1);
       outline: none;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
       font-family: inherit;
       appearance: none;
       -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23777'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 30px;
-      min-width: 80px;
+      background-position: right 8px center;
+      padding-right: 26px;
+      min-width: 70px;
     }
 
     /* 额度显示卡片 */
@@ -379,8 +380,8 @@
     }
 
     .icon-btn {
-      width: 34px;
-      height: 34px;
+      width: 30px;
+      height: 30px;
       border: none;
       border-radius: 50%;
       cursor: pointer;
@@ -391,7 +392,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       color: #3a3a3a;
       border-bottom: 1px solid #eee;
     }
@@ -652,11 +653,11 @@
     }
 
     .btn-sm {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       padding: 0;
       border-radius: 50%;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -697,7 +698,7 @@
     <div class="header-card">
       <div class="account-selector" id="accountSelectorArea"></div>
       <div class="header-right-group">
-        <button class="btn primary" id="menuBtn" title="菜单" style="font-size:1.2rem;">☰</button>
+        <button class="btn primary" id="menuBtn" title="菜单" style="font-size:1rem;">☰</button>
       </div>
     </div>
 
@@ -803,7 +804,7 @@
           </div>
           <div class="input-group">
             <label>🏖️ 年假配额（天）</label>
-            <input type="number" id="annualQuotaInput" placeholder="例如 12" value="12" step="1" min="0">
+            <input type="number" id="annualQuotaInput" placeholder="例如 14" value="14" step="1" min="0">
           </div>
         </div>
         <div class="form-buttons">
@@ -917,7 +918,7 @@
             if (!appData.quotas || typeof appData.quotas !== 'object') appData.quotas = {};
             if (!appData.records || typeof appData.records !== 'object') appData.records = {};
             appData.accounts.forEach(acc => {
-              if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 12 };
+              if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14 };
               if (!Array.isArray(appData.records[acc])) appData.records[acc] = [];
             });
             accounts = [...appData.accounts];
@@ -954,7 +955,7 @@
 
       function getQuota(accountName) {
         if (!appData.quotas[accountName]) {
-          appData.quotas[accountName] = { sick: 14, annual: 12 };
+          appData.quotas[accountName] = { sick: 14, annual: 14 };
         }
         return appData.quotas[accountName];
       }
@@ -986,7 +987,7 @@
         if (accounts.length === 0) {
           accountSelectorArea.innerHTML = `
             <span style="color:#888;font-weight:600;font-size:0.85rem;padding:8px 12px;">暂无账户</span>
-            <button class="btn primary btn-sm" id="addFirstAccountBtn" title="添加账户" style="font-size:1.2rem;">➕</button>
+            <button class="btn primary btn-sm" id="addFirstAccountBtn" title="添加账户" style="font-size:1rem;">➕</button>
           `;
           const addFirstBtn = document.getElementById('addFirstAccountBtn');
           if (addFirstBtn) {
@@ -997,11 +998,11 @@
             `<option value="${escapeHtml(acc)}" ${acc === currentAccount ? 'selected' : ''}>${escapeHtml(acc)}</option>`
           ).join('');
           accountSelectorArea.innerHTML = `
-            <span style="color:#555;font-weight:600;font-size:0.9rem;">👤</span>
+            <span style="color:#555;font-weight:600;font-size:0.8rem;">👤</span>
             <select id="accountSelect">${optionsHtml}</select>
-            <button class="btn primary btn-sm" id="addAccountBtn" title="添加账户" style="font-size:1.1rem;">➕</button>
-            <button class="btn primary btn-sm" id="editAccountBtn" title="编辑账户" style="font-size:0.9rem;">✎</button>
-            <button class="btn primary btn-sm" id="deleteAccountBtn" title="删除账户" style="font-size:0.9rem;">🗑</button>
+            <button class="btn primary btn-sm" id="addAccountBtn" title="添加账户" style="font-size:0.9rem;">➕</button>
+            <button class="btn primary btn-sm" id="editAccountBtn" title="编辑账户" style="font-size:0.8rem;">✎</button>
+            <button class="btn primary btn-sm" id="deleteAccountBtn" title="删除账户" style="font-size:0.8rem;">🗑</button>
           `;
           const accountSelect = document.getElementById('accountSelect');
           const addBtn = document.getElementById('addAccountBtn');
@@ -1042,12 +1043,12 @@
           accountNameInput.value = editName;
           const quota = getQuota(editName);
           sickQuotaInput.value = quota.sick || 14;
-          annualQuotaInput.value = quota.annual || 12;
+          annualQuotaInput.value = quota.annual || 14;
         } else {
           accountFormTitle.textContent = '添加账户';
           accountNameInput.value = '';
           sickQuotaInput.value = 14;
-          annualQuotaInput.value = 12;
+          annualQuotaInput.value = 14;
         }
         accountFormOverlay.classList.add('show');
         setTimeout(() => accountNameInput.focus(), 150);
@@ -1268,7 +1269,7 @@
                 if (!appData.quotas) appData.quotas = {};
                 accounts = imported.accounts || [];
                 accounts.forEach(acc => {
-                  if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 12 };
+                  if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14 };
                   if (!appData.records[acc]) appData.records[acc] = [];
                 });
                 if (accounts.length > 0 && (!currentAccount || !accounts.includes(currentAccount))) {
@@ -1296,24 +1297,66 @@
         reader.readAsText(file);
       };
 
-      copyNotesBtn.onclick = async () => {
+      copyNotesBtn.onclick = function() {
         menuOverlay.classList.remove('show');
         if (!currentAccount) { showToast('请先添加账户'); return; }
         const records = getCurrentRecords();
         if (records.length === 0) { showToast('当前账户无记录'); return; }
+        
         const text = records.map(r => {
           let line = `[${r.date}] ${r.type}`;
           if (r.type === '病假' && r.cost > 0) line += ` | 医药费: RM ${parseFloat(r.cost).toFixed(2)}`;
           if (r.note) line += ` | 备注: ${r.note}`;
           return line;
         }).join('\n');
-        try {
-          await navigator.clipboard.writeText(text);
-          showToast('笔记已复制到剪贴板');
-        } catch {
-          showToast('复制失败，请手动复制');
+        
+        // 优先使用 Clipboard API，失败则使用 fallback
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast('笔记已复制到剪贴板');
+          }).catch(() => {
+            fallbackCopy(text);
+          });
+        } else {
+          fallbackCopy(text);
         }
       };
+
+      function fallbackCopy(text) {
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.left = '-9999px';
+          textarea.style.top = '-9999px';
+          textarea.style.opacity = '0';
+          textarea.setAttribute('readonly', '');
+          document.body.appendChild(textarea);
+          
+          if (navigator.userAgent.match(/ipad|iphone/i)) {
+            const range = document.createRange();
+            range.selectNodeContents(textarea);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            textarea.setSelectionRange(0, 999999);
+          } else {
+            textarea.select();
+            textarea.setSelectionRange(0, 999999);
+          }
+          
+          const success = document.execCommand('copy');
+          document.body.removeChild(textarea);
+          
+          if (success) {
+            showToast('笔记已复制到剪贴板');
+          } else {
+            showToast('复制失败，请尝试导出数据');
+          }
+        } catch (err) {
+          showToast('复制失败，请尝试导出数据');
+        }
+      }
 
       clearAllBtn.onclick = () => {
         menuOverlay.classList.remove('show');
