@@ -181,21 +181,18 @@
       flex: 1;
     }
 
-    /* ========== 额度卡片设计 ========== */
     .quota-section {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
-    /* 第一行：3个配额假 */
     .quota-row-top {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 10px;
     }
 
-    /* 第二行：2个无限制假 - 窄版 */
     .quota-row-bottom {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -214,9 +211,10 @@
       flex-direction: column;
       gap: 2px;
       transition: transform 0.2s;
+      position: relative;
+      cursor: pointer;
     }
 
-    /* 第二行卡片更窄 */
     .quota-row-bottom .quota-card-item {
       padding: 8px 12px;
       gap: 1px;
@@ -224,6 +222,14 @@
 
     .quota-card-item:active {
       transform: scale(0.97);
+    }
+
+    .quota-card-edit-hint {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      font-size: 0.55rem;
+      opacity: 0.4;
     }
 
     .quota-card-icon {
@@ -266,7 +272,6 @@
       font-size: 0.55rem;
     }
 
-    /* 各类型颜色 */
     .quota-card-item.sick .quota-card-value { color: #8b6b6b; }
     .quota-card-item.annual .quota-card-value { color: #6b7b8b; }
     .quota-card-item.comp .quota-card-value { color: #7b8b6b; }
@@ -275,7 +280,6 @@
 
     .quota-card-value.quota-warning { color: #c0392b !important; }
 
-    /* 进度条 */
     .quota-progress-bar {
       width: 100%;
       height: 4px;
@@ -708,7 +712,7 @@
       background: #d2d2d2;
       background: linear-gradient(145deg, #e0e0e0 0%, #c5c5c5 100%);
       box-shadow: 20px 20px 40px rgba(0,0,0,0.25), -12px -12px 30px rgba(255,255,255,0.6);
-      max-width: 360px;
+      max-width: 380px;
       width: 90%;
       display: flex;
       flex-direction: column;
@@ -789,6 +793,110 @@
     .quota-safe {
       color: #3a6b4a;
     }
+
+    /* 补给假明细列表 */
+    .comp-detail-list {
+      max-height: 180px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.06);
+      border-radius: 16px;
+      padding: 8px;
+      margin: 4px 0;
+    }
+
+    .comp-detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #dcdcdc;
+      border-radius: 12px;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      gap: 8px;
+    }
+
+    .comp-detail-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .comp-detail-left {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .comp-detail-date {
+      font-weight: 700;
+      color: #3a3a3a;
+      white-space: nowrap;
+    }
+
+    .comp-detail-days {
+      color: #7b8b6b;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .comp-detail-note {
+      color: #888;
+      font-size: 0.7rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .comp-detail-del {
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      background: #c5c5c5;
+      font-size: 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8b3a3a;
+      flex-shrink: 0;
+    }
+
+    .comp-detail-del:active {
+      background: #b0b0b0;
+    }
+
+    .comp-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #d0d8d0;
+      border-radius: 12px;
+      margin-top: 2px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #3a3a3a;
+    }
+
+    .comp-add-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .comp-add-row .input-group {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .comp-empty-hint {
+      text-align: center;
+      color: #999;
+      font-size: 0.75rem;
+      padding: 12px;
+    }
   </style>
 </head>
 <body>
@@ -809,9 +917,8 @@
       </div>
     </div>
 
-    <!-- 全新额度卡片区域 -->
+    <!-- 额度卡片区域 -->
     <div class="quota-section" id="quotaSection" style="display:none;">
-      <!-- 第一行：配额假 -->
       <div class="quota-row-top">
         <div class="quota-card-item sick" id="sickCard">
           <div class="quota-card-icon">🤒</div>
@@ -828,6 +935,7 @@
           <div class="quota-progress-bar"><div class="quota-progress-fill annual" id="annualBar" style="width:0%"></div></div>
         </div>
         <div class="quota-card-item comp" id="compCard">
+          <div class="quota-card-edit-hint">✎</div>
           <div class="quota-card-icon">🔄</div>
           <div class="quota-card-label">补给假</div>
           <div class="quota-card-value" id="compValue">0</div>
@@ -835,7 +943,6 @@
           <div class="quota-progress-bar"><div class="quota-progress-fill comp" id="compBar" style="width:0%"></div></div>
         </div>
       </div>
-      <!-- 第二行：无限制假 - 窄版 -->
       <div class="quota-row-bottom">
         <div class="quota-card-item unpaid" id="unpaidCard">
           <div class="quota-card-icon">💸</div>
@@ -937,15 +1044,39 @@
             <input type="number" id="annualQuotaInput" placeholder="14" value="14" step="1" min="0">
           </div>
         </div>
-        <div class="form-row">
-          <div class="input-group">
-            <label>🔄 补给假（天）</label>
-            <input type="number" id="compQuotaInput" placeholder="0" value="0" step="1" min="0">
-          </div>
-        </div>
         <div class="form-buttons">
           <button class="btn" id="accountFormCancel">取消</button>
           <button class="btn confirm-safe" id="accountFormSave">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 补给假管理弹窗 -->
+    <div class="form-overlay" id="compManageOverlay">
+      <div class="form-panel" style="max-width: 400px;">
+        <div class="form-title">🔄 补给假管理</div>
+        <div class="comp-detail-list" id="compDetailList"></div>
+        <div class="comp-total-row" id="compTotalRow">
+          <span>总计</span>
+          <span id="compTotalDays">0 天</span>
+        </div>
+        <div class="comp-add-row">
+          <div class="input-group" style="flex:1.2;">
+            <label>📅 补给日期</label>
+            <input type="date" id="compDateInput">
+          </div>
+          <div class="input-group" style="max-width:65px;">
+            <label>天数</label>
+            <input type="number" id="compDaysInput" placeholder="1" value="1" step="1" min="1">
+          </div>
+        </div>
+        <div class="input-group">
+          <label>📝 备注原因</label>
+          <input type="text" id="compNoteInput" placeholder="例如：周末加班、节假日值班...">
+        </div>
+        <button class="btn confirm-safe" id="compAddBtn">➕ 添加补给</button>
+        <div class="form-buttons">
+          <button class="btn" id="compManageClose">关闭</button>
         </div>
       </div>
     </div>
@@ -987,7 +1118,7 @@
 
   <script>
     (function() {
-      const STORAGE_KEY = 'attendance_quota_v2';
+      const STORAGE_KEY = 'attendance_quota_v3';
       
       let currentAccount = null;
       let accounts = [];
@@ -998,7 +1129,8 @@
       let appData = {
         accounts: [],
         quotas: {},
-        records: {}
+        records: {},
+        compDetails: {}
       };
 
       const QUOTA_TYPES = ['病假', '年假', '补给假'];
@@ -1054,9 +1186,18 @@
       const accountNameInput = document.getElementById('accountNameInput');
       const sickQuotaInput = document.getElementById('sickQuotaInput');
       const annualQuotaInput = document.getElementById('annualQuotaInput');
-      const compQuotaInput = document.getElementById('compQuotaInput');
       const accountFormCancel = document.getElementById('accountFormCancel');
       const accountFormSave = document.getElementById('accountFormSave');
+
+      // 补给假管理弹窗
+      const compManageOverlay = document.getElementById('compManageOverlay');
+      const compDetailList = document.getElementById('compDetailList');
+      const compTotalDays = document.getElementById('compTotalDays');
+      const compDateInput = document.getElementById('compDateInput');
+      const compDaysInput = document.getElementById('compDaysInput');
+      const compNoteInput = document.getElementById('compNoteInput');
+      const compAddBtn = document.getElementById('compAddBtn');
+      const compManageClose = document.getElementById('compManageClose');
 
       const editRecordOverlay = document.getElementById('editRecordOverlay');
       const editDateInput = document.getElementById('editDateInput');
@@ -1110,18 +1251,25 @@
             if (!appData.accounts || !Array.isArray(appData.accounts)) appData.accounts = [];
             if (!appData.quotas || typeof appData.quotas !== 'object') appData.quotas = {};
             if (!appData.records || typeof appData.records !== 'object') appData.records = {};
+            if (!appData.compDetails || typeof appData.compDetails !== 'object') appData.compDetails = {};
             appData.accounts.forEach(acc => {
-              if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14, comp: 0 };
-              if (appData.quotas[acc].comp === undefined) appData.quotas[acc].comp = 0;
+              if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14 };
               if (!Array.isArray(appData.records[acc])) appData.records[acc] = [];
+              if (!Array.isArray(appData.compDetails[acc])) appData.compDetails[acc] = [];
             });
             accounts = [...appData.accounts];
+            accounts.forEach(acc => {
+              const details = appData.compDetails[acc] || [];
+              const totalComp = details.reduce((sum, d) => sum + (d.days || 0), 0);
+              if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14 };
+              appData.quotas[acc].comp = totalComp;
+            });
           } catch (e) {
-            appData = { accounts: [], quotas: {}, records: {} };
+            appData = { accounts: [], quotas: {}, records: {}, compDetails: {} };
             accounts = [];
           }
         } else {
-          appData = { accounts: [], quotas: {}, records: {} };
+          appData = { accounts: [], quotas: {}, records: {}, compDetails: {} };
           accounts = [];
         }
         if (accounts.length > 0) {
@@ -1139,6 +1287,12 @@
 
       function saveData() {
         appData.accounts = accounts;
+        accounts.forEach(acc => {
+          const details = appData.compDetails[acc] || [];
+          const totalComp = details.reduce((sum, d) => sum + (d.days || 0), 0);
+          if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14 };
+          appData.quotas[acc].comp = totalComp;
+        });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
       }
 
@@ -1147,12 +1301,14 @@
         return appData.records[accountName].filter(r => r.type === type).length;
       }
 
+      function getCompTotal(accountName) {
+        const details = appData.compDetails[accountName] || [];
+        return details.reduce((sum, d) => sum + (d.days || 0), 0);
+      }
+
       function getQuota(accountName) {
         if (!appData.quotas[accountName]) {
-          appData.quotas[accountName] = { sick: 14, annual: 14, comp: 0 };
-        }
-        if (appData.quotas[accountName].comp === undefined) {
-          appData.quotas[accountName].comp = 0;
+          appData.quotas[accountName] = { sick: 14, annual: 14 };
         }
         return appData.quotas[accountName];
       }
@@ -1171,13 +1327,14 @@
         const unpaidUsed = getUsedDays(currentAccount, '无薪假');
         const otherUsed = getUsedDays(currentAccount, '其他');
         
+        const compTotal = getCompTotal(currentAccount);
         const sickRemaining = Math.max(0, (quota.sick || 0) - sickUsed);
         const annualRemaining = Math.max(0, (quota.annual || 0) - annualUsed);
-        const compRemaining = Math.max(0, (quota.comp || 0) - compUsed);
+        const compRemaining = Math.max(0, compTotal - compUsed);
         
         const sickPercent = (quota.sick || 0) > 0 ? Math.min(100, Math.round((sickUsed / (quota.sick || 1)) * 100)) : 0;
         const annualPercent = (quota.annual || 0) > 0 ? Math.min(100, Math.round((annualUsed / (quota.annual || 1)) * 100)) : 0;
-        const compPercent = (quota.comp || 0) > 0 ? Math.min(100, Math.round((compUsed / (quota.comp || 1)) * 100)) : 0;
+        const compPercent = compTotal > 0 ? Math.min(100, Math.round((compUsed / compTotal) * 100)) : 0;
 
         sickValue.textContent = sickRemaining;
         sickValue.className = 'quota-card-value ' + (sickRemaining === 0 && (quota.sick || 0) > 0 ? 'quota-warning' : '');
@@ -1190,8 +1347,8 @@
         annualBar.style.width = annualPercent + '%';
 
         compValue.textContent = compRemaining;
-        compValue.className = 'quota-card-value ' + (compRemaining === 0 && (quota.comp || 0) > 0 ? 'quota-warning' : '');
-        compDetail.textContent = '已用' + compUsed + '天 / ' + (quota.comp || 0) + '天';
+        compValue.className = 'quota-card-value ' + (compRemaining === 0 && compTotal > 0 ? 'quota-warning' : '');
+        compDetail.textContent = '已用' + compUsed + '天 / ' + compTotal + '天';
         compBar.style.width = compPercent + '%';
 
         unpaidValue.textContent = unpaidUsed;
@@ -1263,13 +1420,11 @@
           const quota = getQuota(editName);
           sickQuotaInput.value = quota.sick || 14;
           annualQuotaInput.value = quota.annual || 14;
-          compQuotaInput.value = quota.comp || 0;
         } else {
           accountFormTitle.textContent = '添加账户';
           accountNameInput.value = '';
           sickQuotaInput.value = 14;
           annualQuotaInput.value = 14;
-          compQuotaInput.value = 0;
         }
         accountFormOverlay.classList.add('show');
         setTimeout(() => accountNameInput.focus(), 150);
@@ -1288,7 +1443,6 @@
         const name = accountNameInput.value.trim();
         const sickQuota = parseInt(sickQuotaInput.value) || 0;
         const annualQuota = parseInt(annualQuotaInput.value) || 0;
-        const compQuota = parseInt(compQuotaInput.value) || 0;
         
         if (!name) { showToast('请输入账户名称'); return; }
         
@@ -1304,10 +1458,14 @@
               appData.records[name] = appData.records[editingAccountName];
               delete appData.records[editingAccountName];
             }
+            if (appData.compDetails[editingAccountName]) {
+              appData.compDetails[name] = appData.compDetails[editingAccountName];
+              delete appData.compDetails[editingAccountName];
+            }
             if (appData.quotas[editingAccountName]) {
               delete appData.quotas[editingAccountName];
             }
-            appData.quotas[name] = { sick: sickQuota, annual: annualQuota, comp: compQuota };
+            appData.quotas[name] = { sick: sickQuota, annual: annualQuota };
             if (currentAccount === editingAccountName) {
               currentAccount = name;
             }
@@ -1319,7 +1477,8 @@
           }
           accounts.push(name);
           appData.records[name] = [];
-          appData.quotas[name] = { sick: sickQuota, annual: annualQuota, comp: compQuota };
+          appData.compDetails[name] = [];
+          appData.quotas[name] = { sick: sickQuota, annual: annualQuota };
           if (!currentAccount) {
             currentAccount = name;
           }
@@ -1342,6 +1501,7 @@
           accounts = accounts.filter(a => a !== name);
           delete appData.records[name];
           delete appData.quotas[name];
+          delete appData.compDetails[name];
           if (currentAccount === name) {
             currentAccount = accounts.length > 0 ? accounts[0] : null;
             isExpanded = false;
@@ -1357,7 +1517,9 @@
 
       function getCurrentRecords() {
         if (!currentAccount || !appData.records[currentAccount]) return [];
-        return appData.records[currentAccount];
+        return [...appData.records[currentAccount]].sort((a, b) => {
+          return (b.date || '').localeCompare(a.date || '');
+        });
       }
 
       function getBadgeClass(type) {
@@ -1370,6 +1532,93 @@
           default: return 'other';
         }
       }
+
+      // ========== 补给假管理 ==========
+      function openCompManage() {
+        if (!currentAccount) return;
+        if (compDateInput) {
+          compDateInput.value = new Date().toISOString().slice(0, 10);
+        }
+        compDaysInput.value = 1;
+        compNoteInput.value = '';
+        renderCompDetails();
+        compManageOverlay.classList.add('show');
+        setTimeout(() => compDateInput.focus(), 150);
+      }
+
+      function closeCompManage() {
+        compManageOverlay.classList.remove('show');
+      }
+
+      function renderCompDetails() {
+        const details = appData.compDetails[currentAccount] || [];
+        if (details.length === 0) {
+          compDetailList.innerHTML = '<div class="comp-empty-hint">暂无补给记录，请在下方添加</div>';
+        } else {
+          compDetailList.innerHTML = details.map((d, i) => `
+            <div class="comp-detail-item">
+              <div class="comp-detail-left">
+                <span class="comp-detail-date">📅 ${d.date}</span>
+                <span class="comp-detail-days">+${d.days}天</span>
+                ${d.note ? `<span class="comp-detail-note">📝 ${escapeHtml(d.note)}</span>` : ''}
+              </div>
+              <button class="comp-detail-del" data-index="${i}" title="删除">✕</button>
+            </div>
+          `).join('');
+
+          compDetailList.querySelectorAll('.comp-detail-del').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const index = parseInt(btn.dataset.index);
+              if (!isNaN(index)) {
+                const details = appData.compDetails[currentAccount] || [];
+                details.splice(index, 1);
+                appData.compDetails[currentAccount] = details;
+                saveData();
+                updateQuotaDisplay();
+                renderCompDetails();
+                renderRecords();
+              }
+            });
+          });
+        }
+
+        const total = getCompTotal(currentAccount);
+        compTotalDays.textContent = total + ' 天';
+      }
+
+      compAddBtn.addEventListener('click', () => {
+        if (!currentAccount) return;
+        const date = compDateInput.value;
+        const days = parseInt(compDaysInput.value) || 1;
+        const note = compNoteInput.value.trim();
+        
+        if (!date) { showToast('请选择补给日期'); return; }
+        if (days < 1) { showToast('天数至少为1'); return; }
+        
+        if (!appData.compDetails[currentAccount]) {
+          appData.compDetails[currentAccount] = [];
+        }
+        
+        appData.compDetails[currentAccount].push({
+          date,
+          days,
+          note,
+          timestamp: Date.now()
+        });
+        
+        saveData();
+        updateQuotaDisplay();
+        renderCompDetails();
+        compDaysInput.value = 1;
+        compNoteInput.value = '';
+        showToast(`已添加 +${days}天 补给假`);
+      });
+
+      compManageClose.addEventListener('click', closeCompManage);
+      compManageOverlay.addEventListener('click', e => { if (e.target === compManageOverlay) closeCompManage(); });
+
+      document.getElementById('compCard').addEventListener('click', openCompManage);
 
       function renderSummaryBar() {
         const records = getCurrentRecords();
@@ -1456,14 +1705,24 @@
         recordContainer.querySelectorAll('.edit-record').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const index = parseInt(btn.dataset.index);
-            if (!isNaN(index)) openEditRecord(index);
+            if (!isNaN(index)) {
+              const records = getCurrentRecords();
+              const rec = records[index];
+              const originalIndex = appData.records[currentAccount].indexOf(rec);
+              openEditRecord(originalIndex);
+            }
           });
         });
 
         recordContainer.querySelectorAll('.del-record').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const index = parseInt(btn.dataset.index);
-            if (!isNaN(index)) deleteRecord(index);
+            if (!isNaN(index)) {
+              const records = getCurrentRecords();
+              const rec = records[index];
+              const originalIndex = appData.records[currentAccount].indexOf(rec);
+              deleteRecord(originalIndex);
+            }
           });
         });
       }
@@ -1476,7 +1735,8 @@
       }
 
       function openEditRecord(index) {
-        const records = getCurrentRecords();
+        if (!currentAccount) return;
+        const records = appData.records[currentAccount];
         if (index < 0 || index >= records.length) return;
         const rec = records[index];
         editingRecordIndex = index;
@@ -1511,8 +1771,8 @@
       editRecordOverlay.addEventListener('click', e => { if (e.target === editRecordOverlay) closeEditRecord(); });
 
       editRecordSave.addEventListener('click', () => {
-        if (editingRecordIndex === null) return;
-        const records = getCurrentRecords();
+        if (editingRecordIndex === null || !currentAccount) return;
+        const records = appData.records[currentAccount];
         if (editingRecordIndex < 0 || editingRecordIndex >= records.length) return;
         
         const date = editDateInput.value;
@@ -1524,14 +1784,13 @@
         
         if (QUOTA_TYPES.includes(type)) {
           const oldType = records[editingRecordIndex].type;
-          const quota = getQuota(currentAccount);
           let usedDays = getUsedDays(currentAccount, type);
           
           if (oldType !== type) {
             let totalQuota = 0;
-            if (type === '病假') totalQuota = quota.sick || 0;
-            else if (type === '年假') totalQuota = quota.annual || 0;
-            else if (type === '补给假') totalQuota = quota.comp || 0;
+            if (type === '病假') totalQuota = getQuota(currentAccount).sick || 0;
+            else if (type === '年假') totalQuota = getQuota(currentAccount).annual || 0;
+            else if (type === '补给假') totalQuota = getCompTotal(currentAccount);
             
             if (usedDays >= totalQuota) {
               showToast(`⚠️ ${type}配额已用完（${totalQuota}天），无法更改`);
@@ -1557,7 +1816,8 @@
       });
 
       function deleteRecord(index) {
-        const records = getCurrentRecords();
+        if (!currentAccount) return;
+        const records = appData.records[currentAccount];
         if (index >= 0 && index < records.length) {
           const rec = records[index];
           showModal(`确定删除 ${rec.date} 的「${rec.type}」记录吗？（将恢复配额）`, { icon: '🗑️', confirmText: '删除', confirmClass: 'confirm-danger' }).then(ok => {
@@ -1591,12 +1851,11 @@
         if (!date) { showToast('请选择日期'); return; }
         
         if (QUOTA_TYPES.includes(type)) {
-          const quota = getQuota(currentAccount);
           const usedDays = getUsedDays(currentAccount, type);
           let totalQuota = 0;
-          if (type === '病假') totalQuota = quota.sick || 0;
-          else if (type === '年假') totalQuota = quota.annual || 0;
-          else if (type === '补给假') totalQuota = quota.comp || 0;
+          if (type === '病假') totalQuota = getQuota(currentAccount).sick || 0;
+          else if (type === '年假') totalQuota = getQuota(currentAccount).annual || 0;
+          else if (type === '补给假') totalQuota = getCompTotal(currentAccount);
           
           if (usedDays >= totalQuota) {
             showToast(`⚠️ ${type}配额已用完（${totalQuota}天），无法再记录`);
@@ -1604,7 +1863,7 @@
           }
         }
         
-        getCurrentRecords().push({
+        appData.records[currentAccount].push({
           date, type, cost, note,
           account: currentAccount,
           timestamp: Date.now()
@@ -1649,11 +1908,17 @@
                 if (!ok) { importFile.value = ''; return; }
                 appData = imported;
                 if (!appData.quotas) appData.quotas = {};
+                if (!appData.compDetails) appData.compDetails = {};
                 accounts = imported.accounts || [];
                 accounts.forEach(acc => {
-                  if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14, comp: 0 };
-                  if (appData.quotas[acc].comp === undefined) appData.quotas[acc].comp = 0;
+                  if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14 };
                   if (!appData.records[acc]) appData.records[acc] = [];
+                  if (!appData.compDetails[acc]) appData.compDetails[acc] = [];
+                });
+                accounts.forEach(acc => {
+                  const details = appData.compDetails[acc] || [];
+                  const totalComp = details.reduce((sum, d) => sum + (d.days || 0), 0);
+                  appData.quotas[acc].comp = totalComp;
                 });
                 if (accounts.length > 0 && (!currentAccount || !accounts.includes(currentAccount))) {
                   currentAccount = accounts[0];
@@ -1745,7 +2010,7 @@
         menuOverlay.classList.remove('show');
         showModal('确定清空所有账户的全部考勤数据吗？此操作不可恢复。', { icon: '⚠️', confirmText: '清空', confirmClass: 'confirm-danger' }).then(ok => {
           if (!ok) return;
-          appData = { accounts: [], quotas: {}, records: {} };
+          appData = { accounts: [], quotas: {}, records: {}, compDetails: {} };
           accounts = [];
           currentAccount = null;
           isExpanded = false;
@@ -1785,6 +2050,7 @@
           else if (menuOverlay.classList.contains('show')) menuOverlay.classList.remove('show');
           else if (accountFormOverlay.classList.contains('show')) closeAccountForm();
           else if (editRecordOverlay.classList.contains('show')) closeEditRecord();
+          else if (compManageOverlay.classList.contains('show')) closeCompManage();
         }
       });
 
