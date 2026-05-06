@@ -155,6 +155,8 @@
       border-radius: 30px;
       padding: 4px 6px 4px 10px;
       box-shadow: inset 2px 2px 6px rgba(0,0,0,0.1), 0 0 0 1px #e8e8e8;
+      flex: 1;
+      min-width: 0;
     }
 
     .account-selector select {
@@ -176,19 +178,25 @@
       background-position: right 8px center;
       padding-right: 26px;
       min-width: 70px;
+      flex: 1;
     }
 
-    /* 额度显示卡片 */
+    .quota-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
     .quota-card {
-      border-radius: 24px;
-      padding: 16px 18px;
+      border-radius: 20px;
+      padding: 12px 14px;
       background: #d4d4d4;
       background: linear-gradient(180deg, #e0e0e0 0%, #c8c8c8 100%);
       box-shadow: 6px 6px 12px rgba(0,0,0,0.1), -3px -3px 10px rgba(255,255,255,0.6);
       border-bottom: 1px solid #e8e8e8;
       display: flex;
       justify-content: space-around;
-      gap: 12px;
+      gap: 8px;
     }
 
     .quota-item {
@@ -197,11 +205,11 @@
     }
 
     .quota-label {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       font-weight: 700;
       color: #777;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.3px;
       margin-bottom: 4px;
     }
 
@@ -209,23 +217,23 @@
       display: flex;
       align-items: baseline;
       justify-content: center;
-      gap: 4px;
+      gap: 3px;
     }
 
     .quota-remaining {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 800;
       color: #3a3a3a;
     }
 
     .quota-total {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       font-weight: 600;
       color: #999;
     }
 
     .quota-used {
-      font-size: 0.6rem;
+      font-size: 0.55rem;
       font-weight: 600;
       color: #999;
       margin-top: 2px;
@@ -239,6 +247,9 @@
 
     .quota-item.sick .quota-remaining { color: #8b6b6b; }
     .quota-item.annual .quota-remaining { color: #6b7b8b; }
+    .quota-item.comp .quota-remaining { color: #7b8b6b; }
+    .quota-item.unpaid .quota-remaining { color: #9b8958; }
+    .quota-item.other .quota-remaining { color: #6b8b8b; }
 
     .content-panel {
       border-radius: 28px;
@@ -310,6 +321,13 @@
 
     .record-list.expanded {
       max-height: none;
+    }
+
+    .record-list.collapsed-empty {
+      max-height: none;
+      padding: 0;
+      background: transparent;
+      box-shadow: none;
     }
 
     .record-summary {
@@ -388,21 +406,11 @@
       text-shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
 
-    .badge.sick {
-      background: #b0a0a0;
-    }
-
-    .badge.annual {
-      background: #a0a8b0;
-    }
-
-    .badge.unpaid {
-      background: #c0a060;
-    }
-
-    .badge.other {
-      background: #8b9e8b;
-    }
+    .badge.sick { background: #b0a0a0; }
+    .badge.annual { background: #a0a8b0; }
+    .badge.comp { background: #90a878; }
+    .badge.unpaid { background: #c0a060; }
+    .badge.other { background: #8b9e8b; }
 
     .record-date {
       font-weight: 700;
@@ -464,7 +472,7 @@
       position: fixed;
       inset: 0;
       background: rgba(40,40,40,0.5);
-      display: flex;
+        display: flex;
       align-items: center;
       justify-content: center;
       z-index: 350;
@@ -730,15 +738,11 @@
     .quota-safe {
       color: #3a6b4a;
     }
-
-    .quota-item.unpaid .quota-remaining { color: #9b8958; }
-    .quota-item.other .quota-remaining { color: #6b8b6b; }
   </style>
 </head>
 <body>
 
   <div class="app">
-    <!-- 标题卡片 -->
     <div class="title-card">
       <div class="title-left">
         <span class="app-icon">📋</span>
@@ -747,7 +751,6 @@
       <span class="date-badge" id="currentDate"></span>
     </div>
 
-    <!-- 操作栏卡片 -->
     <div class="header-card">
       <div class="account-selector" id="accountSelectorArea"></div>
       <div class="header-right-group">
@@ -755,46 +758,56 @@
       </div>
     </div>
 
-    <!-- 额度卡片 -->
-    <div class="quota-card" id="quotaCard" style="display:none;">
-      <div class="quota-item sick">
-        <div class="quota-label">🤒 病假剩余</div>
-        <div class="quota-values">
-          <span class="quota-remaining" id="sickRemaining">0</span>
-          <span class="quota-total" id="sickTotal">/0天</span>
+    <div class="quota-grid" id="quotaGrid" style="display:none;">
+      <div class="quota-card" id="quotaRow1">
+        <div class="quota-item sick">
+          <div class="quota-label">🤒 病假</div>
+          <div class="quota-values">
+            <span class="quota-remaining" id="sickRemaining">0</span>
+            <span class="quota-total" id="sickTotal">/0天</span>
+          </div>
+          <div class="quota-used" id="sickUsed">已用0天</div>
         </div>
-        <div class="quota-used" id="sickUsed">已用 0 天</div>
+        <div class="quota-divider"></div>
+        <div class="quota-item annual">
+          <div class="quota-label">🏖️ 年假</div>
+          <div class="quota-values">
+            <span class="quota-remaining" id="annualRemaining">0</span>
+            <span class="quota-total" id="annualTotal">/0天</span>
+          </div>
+          <div class="quota-used" id="annualUsed">已用0天</div>
+        </div>
+        <div class="quota-divider"></div>
+        <div class="quota-item comp">
+          <div class="quota-label">🔄 补给假</div>
+          <div class="quota-values">
+            <span class="quota-remaining" id="compRemaining">0</span>
+            <span class="quota-total" id="compTotal">/0天</span>
+          </div>
+          <div class="quota-used" id="compUsed">已用0天</div>
+        </div>
       </div>
-      <div class="quota-divider"></div>
-      <div class="quota-item annual">
-        <div class="quota-label">🏖️ 年假剩余</div>
-        <div class="quota-values">
-          <span class="quota-remaining" id="annualRemaining">0</span>
-          <span class="quota-total" id="annualTotal">/0天</span>
+      <div class="quota-card" id="quotaRow2">
+        <div class="quota-item unpaid">
+          <div class="quota-label">💸 无薪假</div>
+          <div class="quota-values">
+            <span class="quota-remaining" id="unpaidCount">0</span>
+            <span class="quota-total">天</span>
+          </div>
+          <div class="quota-used">不计配额</div>
         </div>
-        <div class="quota-used" id="annualUsed">已用 0 天</div>
-      </div>
-      <div class="quota-divider"></div>
-      <div class="quota-item unpaid">
-        <div class="quota-label">💸 无薪假</div>
-        <div class="quota-values">
-          <span class="quota-remaining" id="unpaidCount">0</span>
-          <span class="quota-total">天</span>
+        <div class="quota-divider"></div>
+        <div class="quota-item other">
+          <div class="quota-label">📌 其他</div>
+          <div class="quota-values">
+            <span class="quota-remaining" id="otherCount">0</span>
+            <span class="quota-total">天</span>
+          </div>
+          <div class="quota-used">不计配额</div>
         </div>
-        <div class="quota-used" id="unpaidNote">不计配额</div>
-      </div>
-      <div class="quota-divider"></div>
-      <div class="quota-item other">
-        <div class="quota-label">📌 其他</div>
-        <div class="quota-values">
-          <span class="quota-remaining" id="otherCount">0</span>
-          <span class="quota-total">天</span>
-        </div>
-        <div class="quota-used" id="otherNote">不计配额</div>
       </div>
     </div>
 
-    <!-- 内容面板 -->
     <div class="content-panel" id="contentPanel">
       <div class="welcome-hint" id="noAccountHint">👆 请先添加一个账户</div>
       <div class="record-form" id="recordFormArea" style="display:none;">
@@ -807,6 +820,7 @@
           <select id="typeSelect">
             <option value="病假">🤒 病假</option>
             <option value="年假">🏖️ 年假</option>
+            <option value="补给假">🔄 补给假</option>
             <option value="无薪假">💸 无薪假</option>
             <option value="其他">📌 其他(请备注)</option>
           </select>
@@ -825,7 +839,6 @@
       <div class="record-list" id="recordContainer"></div>
     </div>
 
-    <!-- 弹出菜单 -->
     <div class="menu-overlay" id="menuOverlay">
       <div class="menu-popup">
         <button class="btn install-menu-btn" id="installAppBtn" style="display:none;">📱 安装应用</button>
@@ -839,7 +852,6 @@
     </div>
     <input type="file" id="importFile" accept=".json" style="display:none;">
 
-    <!-- 确认弹窗 -->
     <div class="modal-overlay" id="modalOverlay">
       <div class="modal-box">
         <div class="modal-title" id="modalIcon">⚠️</div>
@@ -851,7 +863,6 @@
       </div>
     </div>
 
-    <!-- 教程弹窗 -->
     <div class="modal-overlay" id="tutorialOverlay">
       <div class="modal-box">
         <div class="modal-title">📲 安装到主屏幕教程</div>
@@ -866,19 +877,24 @@
       </div>
     </div>
 
-    <!-- 添加/编辑账户弹窗 -->
     <div class="form-overlay" id="accountFormOverlay">
       <div class="form-panel">
         <div class="form-title" id="accountFormTitle">添加账户</div>
         <input type="text" id="accountNameInput" placeholder="输入账户名称" autocomplete="off">
         <div class="form-row">
           <div class="input-group">
-            <label>🤒 病假配额（天）</label>
-            <input type="number" id="sickQuotaInput" placeholder="例如 14" value="14" step="1" min="0">
+            <label>🤒 病假（天）</label>
+            <input type="number" id="sickQuotaInput" placeholder="14" value="14" step="1" min="0">
           </div>
           <div class="input-group">
-            <label>🏖️ 年假配额（天）</label>
-            <input type="number" id="annualQuotaInput" placeholder="例如 14" value="14" step="1" min="0">
+            <label>🏖️ 年假（天）</label>
+            <input type="number" id="annualQuotaInput" placeholder="14" value="14" step="1" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="input-group">
+            <label>🔄 补给假（天）</label>
+            <input type="number" id="compQuotaInput" placeholder="0" value="0" step="1" min="0">
           </div>
         </div>
         <div class="form-buttons">
@@ -888,7 +904,6 @@
       </div>
     </div>
 
-    <!-- 编辑记录弹窗 -->
     <div class="form-overlay" id="editRecordOverlay">
       <div class="form-panel">
         <div class="form-title">✏️ 编辑记录</div>
@@ -901,6 +916,7 @@
           <select id="editTypeSelect">
             <option value="病假">🤒 病假</option>
             <option value="年假">🏖️ 年假</option>
+            <option value="补给假">🔄 补给假</option>
             <option value="无薪假">💸 无薪假</option>
             <option value="其他">📌 其他(请备注)</option>
           </select>
@@ -925,14 +941,14 @@
 
   <script>
     (function() {
-      const STORAGE_KEY = 'attendance_quota_v1';
-      const COLLAPSE_THRESHOLD = 8; // 超过8条记录时显示折叠按钮
+      const STORAGE_KEY = 'attendance_quota_v2';
+      const COLLAPSE_THRESHOLD = 8;
       
       let currentAccount = null;
       let accounts = [];
       let editingAccountName = null;
       let editingRecordIndex = null;
-      let isExpanded = false; // 记录列表是否展开
+      let isExpanded = false; // 默认收起
       
       let appData = {
         accounts: [],
@@ -940,25 +956,23 @@
         records: {}
       };
 
-      // 请假类型列表
-      const LEAVE_TYPES = ['病假', '年假', '无薪假', '其他'];
-      // 需要配额检查的类型
-      const QUOTA_TYPES = ['病假', '年假'];
+      const QUOTA_TYPES = ['病假', '年假', '补给假'];
 
       const accountSelectorArea = document.getElementById('accountSelectorArea');
       const noAccountHint = document.getElementById('noAccountHint');
       const recordFormArea = document.getElementById('recordFormArea');
-      const quotaCard = document.getElementById('quotaCard');
+      const quotaGrid = document.getElementById('quotaGrid');
       const sickRemainingEl = document.getElementById('sickRemaining');
       const sickTotalEl = document.getElementById('sickTotal');
       const sickUsedEl = document.getElementById('sickUsed');
       const annualRemainingEl = document.getElementById('annualRemaining');
       const annualTotalEl = document.getElementById('annualTotal');
       const annualUsedEl = document.getElementById('annualUsed');
+      const compRemainingEl = document.getElementById('compRemaining');
+      const compTotalEl = document.getElementById('compTotal');
+      const compUsedEl = document.getElementById('compUsed');
       const unpaidCountEl = document.getElementById('unpaidCount');
-      const unpaidNoteEl = document.getElementById('unpaidNote');
       const otherCountEl = document.getElementById('otherCount');
-      const otherNoteEl = document.getElementById('otherNote');
       const dateInput = document.getElementById('dateInput');
       const typeSelect = document.getElementById('typeSelect');
       const costInput = document.getElementById('costInput');
@@ -991,10 +1005,10 @@
       const accountNameInput = document.getElementById('accountNameInput');
       const sickQuotaInput = document.getElementById('sickQuotaInput');
       const annualQuotaInput = document.getElementById('annualQuotaInput');
+      const compQuotaInput = document.getElementById('compQuotaInput');
       const accountFormCancel = document.getElementById('accountFormCancel');
       const accountFormSave = document.getElementById('accountFormSave');
 
-      // 编辑记录弹窗元素
       const editRecordOverlay = document.getElementById('editRecordOverlay');
       const editDateInput = document.getElementById('editDateInput');
       const editTypeSelect = document.getElementById('editTypeSelect');
@@ -1048,7 +1062,8 @@
             if (!appData.quotas || typeof appData.quotas !== 'object') appData.quotas = {};
             if (!appData.records || typeof appData.records !== 'object') appData.records = {};
             appData.accounts.forEach(acc => {
-              if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14 };
+              if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14, comp: 0 };
+              if (appData.quotas[acc].comp === undefined) appData.quotas[acc].comp = 0;
               if (!Array.isArray(appData.records[acc])) appData.records[acc] = [];
             });
             accounts = [...appData.accounts];
@@ -1085,39 +1100,49 @@
 
       function getQuota(accountName) {
         if (!appData.quotas[accountName]) {
-          appData.quotas[accountName] = { sick: 14, annual: 14 };
+          appData.quotas[accountName] = { sick: 14, annual: 14, comp: 0 };
+        }
+        if (appData.quotas[accountName].comp === undefined) {
+          appData.quotas[accountName].comp = 0;
         }
         return appData.quotas[accountName];
       }
 
       function updateQuotaDisplay() {
         if (!currentAccount) {
-          quotaCard.style.display = 'none';
+          quotaGrid.style.display = 'none';
           return;
         }
-        quotaCard.style.display = '';
+        quotaGrid.style.display = '';
         const quota = getQuota(currentAccount);
         const sickUsed = getUsedDays(currentAccount, '病假');
         const annualUsed = getUsedDays(currentAccount, '年假');
+        const compUsed = getUsedDays(currentAccount, '补给假');
         const unpaidUsed = getUsedDays(currentAccount, '无薪假');
         const otherUsed = getUsedDays(currentAccount, '其他');
+        
         const sickRemaining = Math.max(0, (quota.sick || 0) - sickUsed);
         const annualRemaining = Math.max(0, (quota.annual || 0) - annualUsed);
+        const compRemaining = Math.max(0, (quota.comp || 0) - compUsed);
 
         sickRemainingEl.textContent = sickRemaining;
         sickTotalEl.textContent = '/' + (quota.sick || 0) + '天';
-        sickUsedEl.textContent = '已用 ' + sickUsed + ' 天';
+        sickUsedEl.textContent = '已用' + sickUsed + '天';
+        
         annualRemainingEl.textContent = annualRemaining;
         annualTotalEl.textContent = '/' + (quota.annual || 0) + '天';
-        annualUsedEl.textContent = '已用 ' + annualUsed + ' 天';
+        annualUsedEl.textContent = '已用' + annualUsed + '天';
+        
+        compRemainingEl.textContent = compRemaining;
+        compTotalEl.textContent = '/' + (quota.comp || 0) + '天';
+        compUsedEl.textContent = '已用' + compUsed + '天';
         
         unpaidCountEl.textContent = unpaidUsed;
-        unpaidNoteEl.textContent = '不计配额';
         otherCountEl.textContent = otherUsed;
-        otherNoteEl.textContent = '不计配额';
 
         sickRemainingEl.className = 'quota-remaining ' + (sickRemaining === 0 ? 'quota-warning' : 'quota-safe');
         annualRemainingEl.className = 'quota-remaining ' + (annualRemaining === 0 ? 'quota-warning' : 'quota-safe');
+        compRemainingEl.className = 'quota-remaining ' + (compRemaining === 0 ? 'quota-warning' : 'quota-safe');
         unpaidCountEl.className = 'quota-remaining quota-safe';
         otherCountEl.className = 'quota-remaining quota-safe';
       }
@@ -1151,7 +1176,7 @@
           if (accountSelect) {
             accountSelect.addEventListener('change', (e) => {
               currentAccount = e.target.value;
-              isExpanded = false; // 切换账户时重置折叠状态
+              isExpanded = false;
               updateQuotaDisplay();
               renderRecords();
             });
@@ -1168,11 +1193,11 @@
         if (accounts.length === 0) {
           noAccountHint.style.display = '';
           recordFormArea.style.display = 'none';
-          quotaCard.style.display = 'none';
+          quotaGrid.style.display = 'none';
         } else {
           noAccountHint.style.display = 'none';
           recordFormArea.style.display = '';
-          quotaCard.style.display = '';
+          quotaGrid.style.display = '';
         }
       }
 
@@ -1184,11 +1209,13 @@
           const quota = getQuota(editName);
           sickQuotaInput.value = quota.sick || 14;
           annualQuotaInput.value = quota.annual || 14;
+          compQuotaInput.value = quota.comp || 0;
         } else {
           accountFormTitle.textContent = '添加账户';
           accountNameInput.value = '';
           sickQuotaInput.value = 14;
           annualQuotaInput.value = 14;
+          compQuotaInput.value = 0;
         }
         accountFormOverlay.classList.add('show');
         setTimeout(() => accountNameInput.focus(), 150);
@@ -1207,6 +1234,7 @@
         const name = accountNameInput.value.trim();
         const sickQuota = parseInt(sickQuotaInput.value) || 0;
         const annualQuota = parseInt(annualQuotaInput.value) || 0;
+        const compQuota = parseInt(compQuotaInput.value) || 0;
         
         if (!name) { showToast('请输入账户名称'); return; }
         
@@ -1225,7 +1253,7 @@
             if (appData.quotas[editingAccountName]) {
               delete appData.quotas[editingAccountName];
             }
-            appData.quotas[name] = { sick: sickQuota, annual: annualQuota };
+            appData.quotas[name] = { sick: sickQuota, annual: annualQuota, comp: compQuota };
             if (currentAccount === editingAccountName) {
               currentAccount = name;
             }
@@ -1237,7 +1265,7 @@
           }
           accounts.push(name);
           appData.records[name] = [];
-          appData.quotas[name] = { sick: sickQuota, annual: annualQuota };
+          appData.quotas[name] = { sick: sickQuota, annual: annualQuota, comp: compQuota };
           if (!currentAccount) {
             currentAccount = name;
           }
@@ -1282,6 +1310,7 @@
         switch(type) {
           case '病假': return 'sick';
           case '年假': return 'annual';
+          case '补给假': return 'comp';
           case '无薪假': return 'unpaid';
           case '其他': return 'other';
           default: return 'other';
@@ -1290,17 +1319,22 @@
 
       function renderSummaryBar() {
         const records = getCurrentRecords();
-        if (records.length <= COLLAPSE_THRESHOLD) {
+        
+        // 始终显示摘要栏（只要有记录）
+        if (records.length === 0) {
           recordSummaryArea.innerHTML = '';
-          recordContainer.classList.add('expanded');
+          recordContainer.classList.add('collapsed-empty');
+          recordContainer.classList.remove('expanded');
           return;
         }
-
+        
+        recordContainer.classList.remove('collapsed-empty');
+        
         const summaryText = isExpanded 
           ? `📋 全部记录 (${records.length}条)` 
-          : `📋 最近记录 (显示${Math.min(COLLAPSE_THRESHOLD, records.length)}条，共${records.length}条)`;
+          : `📋 记录已折叠 (${records.length}条)`;
         
-        const toggleText = isExpanded ? '🔼 收起' : '🔽 展开全部';
+        const toggleText = isExpanded ? '🔼 收起全部' : '🔽 展开全部';
         
         recordSummaryArea.innerHTML = `
           <div class="record-summary">
@@ -1339,17 +1373,16 @@
           return;
         }
         
-        // 渲染摘要栏
         renderSummaryBar();
         
-        // 决定显示哪些记录
-        let displayRecords = records;
-        if (!isExpanded && records.length > COLLAPSE_THRESHOLD) {
-          displayRecords = records.slice(0, COLLAPSE_THRESHOLD);
+        // 默认收起：不显示任何记录
+        if (!isExpanded) {
+          recordContainer.innerHTML = '';
+          return;
         }
         
-        recordContainer.innerHTML = displayRecords.map((rec, idx) => {
-          const originalIndex = records.indexOf(rec);
+        // 展开时显示所有记录
+        recordContainer.innerHTML = records.map((rec, idx) => {
           const costDisplay = rec.type === '病假' && rec.cost > 0 ? `💊 RM ${parseFloat(rec.cost).toFixed(2)}` : '';
           return `
             <div class="record-item">
@@ -1362,8 +1395,8 @@
                 ${costDisplay ? `<div class="record-cost">${costDisplay}</div>` : ''}
               </div>
               <div class="record-actions">
-                <button class="icon-btn edit-record" data-index="${originalIndex}" title="编辑">✏️</button>
-                <button class="icon-btn del-record" data-index="${originalIndex}" title="删除">🗑️</button>
+                <button class="icon-btn edit-record" data-index="${idx}" title="编辑">✏️</button>
+                <button class="icon-btn del-record" data-index="${idx}" title="删除">🗑️</button>
               </div>
             </div>
           `;
@@ -1402,7 +1435,6 @@
         editCostInput.value = rec.cost || 0;
         editNoteInput.value = rec.note || '';
         
-        // 根据类型显示/隐藏医药费
         updateEditCostVisibility();
         
         editRecordOverlay.classList.add('show');
@@ -1424,7 +1456,6 @@
       }
 
       editTypeSelect.addEventListener('change', updateEditCostVisibility);
-
       editRecordCancel.addEventListener('click', closeEditRecord);
       editRecordOverlay.addEventListener('click', e => { if (e.target === editRecordOverlay) closeEditRecord(); });
 
@@ -1440,15 +1471,17 @@
         
         if (!date) { showToast('请选择日期'); return; }
         
-        // 检查配额（仅病假和年假需要检查）
         if (QUOTA_TYPES.includes(type)) {
           const oldType = records[editingRecordIndex].type;
           const quota = getQuota(currentAccount);
           let usedDays = getUsedDays(currentAccount, type);
           
-          // 如果类型改变了，需要检查新类型的配额
           if (oldType !== type) {
-            const totalQuota = type === '病假' ? (quota.sick || 0) : (quota.annual || 0);
+            let totalQuota = 0;
+            if (type === '病假') totalQuota = quota.sick || 0;
+            else if (type === '年假') totalQuota = quota.annual || 0;
+            else if (type === '补给假') totalQuota = quota.comp || 0;
+            
             if (usedDays >= totalQuota) {
               showToast(`⚠️ ${type}配额已用完（${totalQuota}天），无法更改`);
               return;
@@ -1487,7 +1520,6 @@
         }
       }
 
-      // 根据类型显示/隐藏医药费输入
       function updateCostVisibility() {
         if (typeSelect.value === '病假') {
           costGroup.style.display = '';
@@ -1507,11 +1539,14 @@
         const note = noteInput.value.trim();
         if (!date) { showToast('请选择日期'); return; }
         
-        // 检查配额（仅病假和年假）
         if (QUOTA_TYPES.includes(type)) {
           const quota = getQuota(currentAccount);
           const usedDays = getUsedDays(currentAccount, type);
-          const totalQuota = type === '病假' ? (quota.sick || 0) : (quota.annual || 0);
+          let totalQuota = 0;
+          if (type === '病假') totalQuota = quota.sick || 0;
+          else if (type === '年假') totalQuota = quota.annual || 0;
+          else if (type === '补给假') totalQuota = quota.comp || 0;
+          
           if (usedDays >= totalQuota) {
             showToast(`⚠️ ${type}配额已用完（${totalQuota}天），无法再记录`);
             return;
@@ -1528,6 +1563,9 @@
         renderRecords();
         noteInput.value = '';
         costInput.value = '0';
+        // 添加新记录后自动展开，方便查看
+        isExpanded = true;
+        renderRecords();
         showToast('记录已添加');
       });
 
@@ -1564,7 +1602,8 @@
                 if (!appData.quotas) appData.quotas = {};
                 accounts = imported.accounts || [];
                 accounts.forEach(acc => {
-                  if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14 };
+                  if (!appData.quotas[acc]) appData.quotas[acc] = { sick: 14, annual: 14, comp: 0 };
+                  if (appData.quotas[acc].comp === undefined) appData.quotas[acc].comp = 0;
                   if (!appData.records[acc]) appData.records[acc] = [];
                 });
                 if (accounts.length > 0 && (!currentAccount || !accounts.includes(currentAccount))) {
@@ -1606,7 +1645,6 @@
           return line;
         }).join('\n');
         
-        // 优先使用 Clipboard API，失败则使用 fallback
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(text).then(() => {
             showToast('笔记已复制到剪贴板');
@@ -1710,7 +1748,6 @@
         navigator.serviceWorker.register('data:application/javascript,').catch(() => {});
       }
 
-      // 初始化医药费显示状态
       updateCostVisibility();
       setDate();
       loadData();
