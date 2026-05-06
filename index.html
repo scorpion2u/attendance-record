@@ -278,7 +278,7 @@
     .quota-card-item.unpaid .quota-card-value { color: #9b8958; }
     .quota-card-item.other .quota-card-value { color: #6b8b8b; }
 
-    .quota-card-value.quota-warning { color: #c0392b !important; }
+    .quota-card-value.quota-overdrawn { color: #c0392b !important; }
 
     .quota-progress-bar {
       width: 100%;
@@ -305,6 +305,10 @@
     .quota-progress-fill.comp { background: #7b8b6b; }
     .quota-progress-fill.unpaid { background: #9b8958; opacity: 0.5; }
     .quota-progress-fill.other { background: #6b8b8b; opacity: 0.5; }
+
+    .quota-progress-fill.overdrawn {
+      background: #c0392b !important;
+    }
 
     .content-panel {
       border-radius: 28px;
@@ -785,16 +789,14 @@
       font-size: 0.85rem;
     }
 
-    .quota-warning {
-      color: #c0392b;
-      font-weight: 700;
+    .quota-overdrawn {
+      color: #c0392b !important;
     }
 
     .quota-safe {
       color: #3a6b4a;
     }
 
-    /* 补给假明细列表 */
     .comp-detail-list {
       max-height: 180px;
       overflow-y: auto;
@@ -917,7 +919,6 @@
       </div>
     </div>
 
-    <!-- 额度卡片区域 -->
     <div class="quota-section" id="quotaSection" style="display:none;">
       <div class="quota-row-top">
         <div class="quota-card-item sick" id="sickCard">
@@ -1051,7 +1052,6 @@
       </div>
     </div>
 
-    <!-- 补给假管理弹窗 -->
     <div class="form-overlay" id="compManageOverlay">
       <div class="form-panel" style="max-width: 400px;">
         <div class="form-title">🔄 补给假管理</div>
@@ -1189,7 +1189,6 @@
       const accountFormCancel = document.getElementById('accountFormCancel');
       const accountFormSave = document.getElementById('accountFormSave');
 
-      // 补给假管理弹窗
       const compManageOverlay = document.getElementById('compManageOverlay');
       const compDetailList = document.getElementById('compDetailList');
       const compTotalDays = document.getElementById('compTotalDays');
@@ -1328,28 +1327,34 @@
         const otherUsed = getUsedDays(currentAccount, '其他');
         
         const compTotal = getCompTotal(currentAccount);
-        const sickRemaining = Math.max(0, (quota.sick || 0) - sickUsed);
-        const annualRemaining = Math.max(0, (quota.annual || 0) - annualUsed);
-        const compRemaining = Math.max(0, compTotal - compUsed);
+        const sickRemaining = (quota.sick || 0) - sickUsed;
+        const annualRemaining = (quota.annual || 0) - annualUsed;
+        const compRemaining = compTotal - compUsed;
         
-        const sickPercent = (quota.sick || 0) > 0 ? Math.min(100, Math.round((sickUsed / (quota.sick || 1)) * 100)) : 0;
-        const annualPercent = (quota.annual || 0) > 0 ? Math.min(100, Math.round((annualUsed / (quota.annual || 1)) * 100)) : 0;
-        const compPercent = compTotal > 0 ? Math.min(100, Math.round((compUsed / compTotal) * 100)) : 0;
+        const sickPercent = (quota.sick || 0) > 0 ? Math.min(100, Math.round((sickUsed / Math.max(quota.sick, sickUsed, 1)) * 100)) : (sickUsed > 0 ? 100 : 0);
+        const annualPercent = (quota.annual || 0) > 0 ? Math.min(100, Math.round((annualUsed / Math.max(quota.annual, annualUsed, 1)) * 100)) : (annualUsed > 0 ? 100 : 0);
+        const compPercent = compTotal > 0 ? Math.min(100, Math.round((compUsed / Math.max(compTotal, compUsed, 1)) * 100)) : (compUsed > 0 ? 100 : 0);
 
+        // 病假
         sickValue.textContent = sickRemaining;
-        sickValue.className = 'quota-card-value ' + (sickRemaining === 0 && (quota.sick || 0) > 0 ? 'quota-warning' : '');
+        sickValue.className = 'quota-card-value ' + (sickRemaining < 0 ? 'quota-overdrawn' : '');
         sickDetail.textContent = '已用' + sickUsed + '天 / ' + (quota.sick || 0) + '天';
         sickBar.style.width = sickPercent + '%';
+        sickBar.className = 'quota-progress-fill sick' + (sickRemaining < 0 ? ' overdrawn' : '');
 
+        // 年假
         annualValue.textContent = annualRemaining;
-        annualValue.className = 'quota-card-value ' + (annualRemaining === 0 && (quota.annual || 0) > 0 ? 'quota-warning' : '');
+        annualValue.className = 'quota-card-value ' + (annualRemaining < 0 ? 'quota-overdrawn' : '');
         annualDetail.textContent = '已用' + annualUsed + '天 / ' + (quota.annual || 0) + '天';
         annualBar.style.width = annualPercent + '%';
+        annualBar.className = 'quota-progress-fill annual' + (annualRemaining < 0 ? ' overdrawn' : '');
 
+        // 补给假
         compValue.textContent = compRemaining;
-        compValue.className = 'quota-card-value ' + (compRemaining === 0 && compTotal > 0 ? 'quota-warning' : '');
+        compValue.className = 'quota-card-value ' + (compRemaining < 0 ? 'quota-overdrawn' : '');
         compDetail.textContent = '已用' + compUsed + '天 / ' + compTotal + '天';
         compBar.style.width = compPercent + '%';
+        compBar.className = 'quota-progress-fill comp' + (compRemaining < 0 ? ' overdrawn' : '');
 
         unpaidValue.textContent = unpaidUsed;
         unpaidBar.style.width = Math.min(unpaidUsed * 5, 100) + '%';
@@ -1533,7 +1538,6 @@
         }
       }
 
-      // ========== 补给假管理 ==========
       function openCompManage() {
         if (!currentAccount) return;
         if (compDateInput) {
@@ -1782,23 +1786,6 @@
         
         if (!date) { showToast('请选择日期'); return; }
         
-        if (QUOTA_TYPES.includes(type)) {
-          const oldType = records[editingRecordIndex].type;
-          let usedDays = getUsedDays(currentAccount, type);
-          
-          if (oldType !== type) {
-            let totalQuota = 0;
-            if (type === '病假') totalQuota = getQuota(currentAccount).sick || 0;
-            else if (type === '年假') totalQuota = getQuota(currentAccount).annual || 0;
-            else if (type === '补给假') totalQuota = getCompTotal(currentAccount);
-            
-            if (usedDays >= totalQuota) {
-              showToast(`⚠️ ${type}配额已用完（${totalQuota}天），无法更改`);
-              return;
-            }
-          }
-        }
-        
         records[editingRecordIndex] = {
           ...records[editingRecordIndex],
           date,
@@ -1850,19 +1837,6 @@
         const note = noteInput.value.trim();
         if (!date) { showToast('请选择日期'); return; }
         
-        if (QUOTA_TYPES.includes(type)) {
-          const usedDays = getUsedDays(currentAccount, type);
-          let totalQuota = 0;
-          if (type === '病假') totalQuota = getQuota(currentAccount).sick || 0;
-          else if (type === '年假') totalQuota = getQuota(currentAccount).annual || 0;
-          else if (type === '补给假') totalQuota = getCompTotal(currentAccount);
-          
-          if (usedDays >= totalQuota) {
-            showToast(`⚠️ ${type}配额已用完（${totalQuota}天），无法再记录`);
-            return;
-          }
-        }
-        
         appData.records[currentAccount].push({
           date, type, cost, note,
           account: currentAccount,
@@ -1874,7 +1848,19 @@
         costInput.value = '0';
         isExpanded = true;
         renderRecords();
-        showToast('记录已添加');
+        
+        // 如果配额已用完，给出提醒但依然允许记录
+        let totalQuota = 0;
+        if (type === '病假') totalQuota = getQuota(currentAccount).sick || 0;
+        else if (type === '年假') totalQuota = getQuota(currentAccount).annual || 0;
+        else if (type === '补给假') totalQuota = getCompTotal(currentAccount);
+        
+        const usedDays = getUsedDays(currentAccount, type);
+        if (QUOTA_TYPES.includes(type) && usedDays > totalQuota) {
+          showToast(`⚠️ ${type}已超额 ${usedDays - totalQuota} 天`);
+        } else {
+          showToast('记录已添加');
+        }
       });
 
       menuBtn.onclick = () => menuOverlay.classList.add('show');
