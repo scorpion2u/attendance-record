@@ -1279,7 +1279,13 @@
       let toastTimer;
       let modalResolve = null;
 
-      if (dateInput) { dateInput.value = new Date().toISOString().slice(0, 10); }
+      if (dateInput) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  dateInput.value = `${year}-${month}-${day}`;
+}
 
       // ========== 工具函数 ==========
       function showToast(msg) {
